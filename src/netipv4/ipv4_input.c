@@ -15,7 +15,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-#include <netipv4/ipv4_input.h>
+#include <netipv4/input.h>
 #include <netipv4/defs.h>
 #include <netipv4/check.h>
 #include <netipv4/ipv4_header.h>
