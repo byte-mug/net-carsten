@@ -33,5 +33,6 @@
 *.su
 
 # CMake
-!/build
 build/*
+!build/.empty
+
