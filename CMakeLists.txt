@@ -35,6 +35,7 @@ file(GLOB C_SRC
 	src/netpkt/*.c
 	src/netif/*.c
 	src/netipv4/*.c
+	src/netprot/*.c
 	)
 
 add_executable(helloworld ${C_SRC})

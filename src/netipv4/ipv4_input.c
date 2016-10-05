@@ -21,6 +21,8 @@
 #include <netipv4/ipv4_header.h>
 
 #include <netsock/addr.h>
+#include <netprot/input.h>
+
 #include <netstd/endianness.h>
 
 
@@ -31,6 +33,7 @@ void netipv4_input( netif_t *netif, netpkt_t *pkt ){
 	size_t              total_length;
 	size_t              header_length;
 	uint16_t            fragment;
+	uint8_t             protocol;
 	net_sockaddr_t      src_addr;
 	net_sockaddr_t      dst_addr;
 	
@@ -73,6 +76,12 @@ void netipv4_input( netif_t *netif, netpkt_t *pkt ){
 	
 CHECK_DONE:
 	fragment = ntoh16(hdr->flags_fragment_offset);
+	protocol = hdr->protocol;
+	
+	src_addr.type  = NET_SKA_IN;
+	src_addr.ip.v4 = hdr->source_addr;
+	dst_addr.type  = NET_SKA_IN;
+	dst_addr.ip.v4 = destination_addr;
 	
 	/* TODO: if(pkt_length > total_length) */
 	
@@ -81,11 +90,6 @@ CHECK_DONE:
 		goto DROP;
 	}
 	
-	src_addr.type  = NET_SKA_IN;
-	src_addr.ip.v4 = hdr->source_addr;
-	dst_addr.type  = NET_SKA_IN;
-	dst_addr.ip.v4 = destination_addr;
-	
 	/*
 	 * Remember the current offset in the packet.
 	 */
@@ -93,9 +97,8 @@ CHECK_DONE:
 	
 	if( netpkt_pullfront(pkt,(uint32_t)header_length) ) goto DROP;
 	
+	netprot_input(netif,pkt,protocol,&src_addr,&dst_addr);
 	
-	
-	netpkt_free(pkt);
 	/*
 	 * fnet_netbuf_free_chain(nb);
 	 * fnet_icmp_error(netif, FNET_ICMP_UNREACHABLE, FNET_ICMP_UNREACHABLE_PROTOCOL, ip4_nb);
