@@ -164,7 +164,7 @@ void netpkt_setlength(netpkt_t *pkt,uint32_t len){
 int netpkt_levelup(netpkt_t *pkt){
 	uint32_t offset;
 
-	if(pkt->level >= 8)return -1;
+	if(pkt->level >= NETPKT_MAX_LEVELS)return -1;
 	offset = NETPKT_OFFSET(pkt);
 	pkt->level++;
 	NETPKT_OFFSET(pkt) = offset;

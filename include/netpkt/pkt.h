@@ -20,6 +20,8 @@
 
 #include <netpkt/seg.h>
 
+#define NETPKT_MAX_LEVELS 8
+
 #define NETPKT_FLAG_BROAD_L2  0x0001
 #define NETPKT_FLAG_BROAD_L3  0x0002
 
@@ -27,7 +29,7 @@ typedef struct netpkt{
 	struct netpkt* next_chain;
 	netpkt_seg_t*  segs;
 	uint32_t       offset_length;
-	uint32_t       offsets[8];
+	uint32_t       offsets[NETPKT_MAX_LEVELS];
 	uint16_t       flags;
 	uint8_t        level;
 } netpkt_t;
