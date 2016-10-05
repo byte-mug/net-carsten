@@ -59,6 +59,11 @@ int netpkt_pullfront(netpkt_t *pkt,uint32_t len);
 int netpkt_pushfront(netpkt_t *pkt,uint32_t len);
 
 /*
+ * Sets the packet's length (relative to the offset).
+ */
+void netpkt_setlength(netpkt_t *pkt,uint32_t len);
+
+/*
  * Raises the pkt->level variable by 1 and copies the offset from the old to
  * the new level.
  *
@@ -66,6 +71,13 @@ int netpkt_pushfront(netpkt_t *pkt,uint32_t len);
  */
 int netpkt_levelup(netpkt_t *pkt);
 
+/*
+ * Lowers the pkt->level variable by 1 and copies the offset from the old to
+ * the new level.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
+int netpkt_leveldown(netpkt_t *pkt);
 
 /*
  * Gets the Data pointer to the current offset.

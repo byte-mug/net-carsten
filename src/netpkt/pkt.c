@@ -18,6 +18,11 @@
 #include <netstd/mem.h>
 #include <netpkt/pkt.h>
 
+/*
+ * Pulls up 'len' bytes to the current offset.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
 int netpkt_pullup(netpkt_t *pkt,size_t len){
 	netpkt_seg_t *seg;
 	netpkt_seg_t *seg2;
@@ -91,6 +96,9 @@ int netpkt_pullup(netpkt_t *pkt,size_t len){
 	return 0;
 }
 
+/*
+ * Gets the Data pointer to the current offset.
+ */
 void *netpkt_data(netpkt_t *pkt){
 	netpkt_seg_t *seg;
 	uint32_t      offset,P;
@@ -115,17 +123,44 @@ void *netpkt_data(netpkt_t *pkt){
 	return (void*)0;
 }
 
+/*
+ * Pull in packet head. Decrease packet data length by removing data from the
+ * head of the packet.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
 int netpkt_pullfront(netpkt_t *pkt,uint32_t len){
 	NETPKT_OFFSET(pkt) += len;
 	return 0;
 }
 
+/*
+ * Push out packet head. Increase packet data length by adding uninitialized
+ * data to the head of the packet.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
 int netpkt_pushfront(netpkt_t *pkt,uint32_t len){
 	if( NETPKT_OFFSET(pkt) < len ) return -1;
 	NETPKT_OFFSET(pkt) -= len;
 	return 0;
 }
 
+/*
+ * Sets the packet's length (relative to the offset).
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
+void netpkt_setlength(netpkt_t *pkt,uint32_t len){
+	pkt->offset_length = len + NETPKT_OFFSET(pkt);
+}
+
+/*
+ * Raises the pkt->level variable by 1 and copies the offset from the old to
+ * the new level.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
 int netpkt_levelup(netpkt_t *pkt){
 	uint32_t offset;
 
@@ -137,6 +172,26 @@ int netpkt_levelup(netpkt_t *pkt){
 	return 0;
 }
 
+/*
+ * Lowers the pkt->level variable by 1 and copies the offset from the old to
+ * the new level.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
+int netpkt_leveldown(netpkt_t *pkt){
+	uint32_t offset;
+
+	if( pkt->level == 0)return -1;
+	offset = NETPKT_OFFSET(pkt);
+	pkt->level--;
+	NETPKT_OFFSET(pkt) = offset;
+
+	return 0;
+}
+
+/*
+ * Frees an entire chain of network packets.
+ */
 void netpkt_free_all(netpkt_t *pkt){
 	netpkt_t *next;
 	
@@ -147,6 +202,9 @@ void netpkt_free_all(netpkt_t *pkt){
 	}
 }
 
+/*
+ * Frees a single network packet.
+ */
 void netpkt_free(netpkt_t *pkt){
 	// TODO: free.
 }

@@ -83,7 +83,10 @@ CHECK_DONE:
 	dst_addr.type  = NET_SKA_IN;
 	dst_addr.ip.v4 = destination_addr;
 	
-	/* TODO: if(pkt_length > total_length) */
+	if(pkt_length > total_length){
+		/* Logical size and the physical size of the packet should be the same.*/
+		netpkt_setlength(pkt,(uint32_t)total_length);
+	}
 	
 	if( fragment & ~FNET_IP_DF ){
 		/* TODO: fragmentation */
