@@ -33,8 +33,5 @@
 *.su
 
 # CMake
-CMakeCache*
-CMakeFiles*
-cmake_install*
+!/build
 build/*
-Makefile
