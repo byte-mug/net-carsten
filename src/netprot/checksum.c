@@ -68,6 +68,57 @@ static uint32_t fnet_checksum_low(uint32_t sum, size_t length, const uint16_t *d
     return sum;
 }
 
+static uint32_t fnet_checksum_pkt(netpkt_t *pkt, size_t length){
+	netpkt_seg_t *seg;
+	size_t       sublen;
+	uint32_t     sum;
+	uint16_t     oddbuf;
+	uint8_t      oddptr;
+	
+	sum = 0;
+	
+	seg = pkt->segs;
+	
+	while( seg && length ){
+		sublen = NETPKT_SEG_LENGTH(seg);
+		if( sublen > length ) sublen = length;
+		if(oddptr){
+			oddbuf |= ((const uint8_t*)seg->data_ptr)[0];
+			sum += (uint32_t)hton16(oddbuf);
+			sum = fnet_checksum_low(sum, (sublen-1)&~1 ,seg->data_ptr+1);
+			oddptr = !(sublen & 1);
+		}else{
+			sum = fnet_checksum_low(sum, sublen&~1 ,seg->data_ptr);
+			oddptr = sublen & 1;
+		}
+		oddbuf = ((const uint8_t*)(seg->data_end-1))[0] << 8;
+		length -= sublen;
+		/* Add in one accumulated carry (prevent integer overflow) */
+		sum = (sum & 0xffffu) + (sum >> 16);
+		seg = seg->next;
+	}
+	if(oddptr) sum += (uint32_t)hton16(oddbuf&0xff00u);
+		
+	return sum;
+}
+
+uint16_t netprot_checksum_pseudo_start( netpkt_t *pkt, uint8_t protocol, uint16_t protocol_len ){
+	netpkt_seg_t *seg;
+	const uint16_t *begin,*end;
+	uint32_t sum;
+	
+	
+	sum = fnet_checksum_pkt(pkt, (size_t)protocol_len);
+	sum += (uint32_t)hton16((uint16_t)protocol);
+	sum += (uint32_t)hton16(protocol_len);
+	
+	 sum += 0xffffu; /*  + 0xffff acording to RFC1624*/
+
+	/* Add in accumulated carries */
+	while ( (sum >> 16) != 0u) sum = (sum & 0xffffu) + (sum >> 16);
+	return (uint16_t)(sum);
+}
+
 uint16_t netprot_checksum_pseudo_end( uint16_t sum_s, const uint8_t *ip_src, uint8_t *ip_dest, size_t addr_size )
 {
     uint32_t sum = 0U;

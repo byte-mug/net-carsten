@@ -21,7 +21,9 @@
 #define _NETPROT_INPUT_H_
 
 #include <netstd/stdint.h>
+#include <netpkt/pkt.h>
 
+uint16_t netprot_checksum_pseudo_start( netpkt_t *pkt, uint8_t protocol, uint16_t protocol_len );
 uint16_t netprot_checksum_pseudo_end( uint16_t sum_s, const uint8_t *ip_src, uint8_t *ip_dest, size_t addr_size );
 
 #endif
