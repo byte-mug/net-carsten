@@ -23,8 +23,16 @@
 #include <netsock/addr.h>
 
 void netipv4_output(
-	netif_t *nif, netpkt_t *pkt, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr,
-	uint8_t protocol,uint8_t tos, uint8_t ttl, char DF, char do_not_route, uint16_t *checksum
+	netif_t *nif,
+	netpkt_t *pkt,
+	net_sockaddr_t *src_addr,
+	net_sockaddr_t *dst_addr,
+	uint8_t protocol,
+	uint8_t tos,
+	uint8_t ttl,
+	char DF,
+	char do_not_route,
+	uint16_t *checksum
 );
 
 #endif

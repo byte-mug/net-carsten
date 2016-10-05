@@ -22,12 +22,25 @@
 #include <netif/ifapi.h>
 
 void netipv4_output(
-	netif_t *nif, netpkt_t *pkt, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr,
-	uint8_t protocol,uint8_t tos, uint8_t ttl, char DF, char do_not_route, uint16_t *checksum
+	netif_t *nif,
+	netpkt_t *pkt,
+	net_sockaddr_t *src_addr,
+	net_sockaddr_t *dst_addr,
+	uint8_t protocol,
+	uint8_t tos,
+	uint8_t ttl,
+	char DF,
+	char do_not_route,
+	uint16_t *checksum
 ){
 	fnet_ip_header_t   *ipheader;
 	uint16_t           fragment;
 	uint32_t           total_length;
+	ipv4_addr_t        src_ip;
+	ipv4_addr_t        dst_ip;
+	
+	src_ip = src_addr->ip.v4;
+	dst_ip = dst_addr->ip.v4;
 	
 	if(nif == 0) goto DROP;
 	
@@ -55,11 +68,11 @@ void netipv4_output(
 	
 	ipheader->flags_fragment_offset = hton16(fragment);
 	
-	ipheader->tos = tos;                         /* Type of service */
-	ipheader->ttl = ttl;                         /* time to live */
-	ipheader->protocol = protocol;               /* protocol */
-	ipheader->source_addr = src_addr->ip.v4;     /* source address */
-	ipheader->desination_addr = src_addr->ip.v4; /* destination address */
+	ipheader->tos = tos;                /* Type of service */
+	ipheader->ttl = ttl;                /* time to live */
+	ipheader->protocol = protocol;      /* protocol */
+	ipheader->source_addr = src_ip;     /* source address */
+	ipheader->desination_addr = dst_ip; /* destination address */
 	
 	ipheader->total_length = hton16((uint16_t)total_length);
 	//ipheader->id = fnet_htons(ip_id++);              /* Id */
@@ -69,7 +82,7 @@ void netipv4_output(
 		// TODO: IP fragmentation
 		goto DROP;
 	}else{
-		nif->netif_class->ifapi_send_l3_ipv4(nif,pkt,&(dst_addr->ip.v4));
+		nif->netif_class->ifapi_send_l3_ipv4(nif,pkt,&dst_ip);
 	}
 	
 DROP:
