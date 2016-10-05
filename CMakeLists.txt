@@ -15,6 +15,15 @@
 #
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.6.0)
+include (TestBigEndian)
+
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+if(IS_BIG_ENDIAN)
+	add_definitions(-D__HOST_ENDIAN_BIG)
+endif()
+
+add_definitions(-D__HAS_BSWAP__)
+
 
 include_directories( ./include )
 
