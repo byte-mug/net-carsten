@@ -20,6 +20,7 @@
 #include <netipv4/ipv4_header.h>
 #include <netstd/endianness.h>
 #include <netif/ifapi.h>
+#include <netprot/checksum.h>
 
 void netipv4_output(
 	netif_t *nif,
@@ -55,14 +56,16 @@ void netipv4_output(
 	
 	netpkt_leveldown(pkt);
 	
-	/* Construct IP header */
-	if( netpkt_pushfront( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
-	
 	/* Pseudo checksum. */
 	if(checksum)
 	{
-		// *checksum = fnet_checksum_pseudo_end( *checksum, (fnet_uint8_t *)&src_ip, (fnet_uint8_t *)&dest_ip, sizeof(fnet_ip4_addr_t) );
+		*checksum = netprot_checksum_pseudo_end( *checksum, (uint8_t*)&src_ip, (uint8_t*)&dst_ip, sizeof(ipv4_addr_t) );
 	}
+	
+	/* Construct IP header */
+	if( netpkt_pushfront( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
+	
+	if( netpkt_pullup( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
 	
 	ipheader = netpkt_data(pkt);
 	

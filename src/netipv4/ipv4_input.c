@@ -88,6 +88,7 @@ CHECK_DONE:
 		netpkt_setlength(pkt,(uint32_t)total_length);
 	}
 	
+	/* Reassembly.*/
 	if( fragment & ~FNET_IP_DF ){
 		/* TODO: fragmentation */
 		goto DROP;
