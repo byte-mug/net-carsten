@@ -15,37 +15,13 @@
  */
 
 
-#ifndef _NETIF_IF_H_
-#define _NETIF_IF_H_
+#ifndef _NETIPV4_CHECK_H_
+#define _NETIPV4_CHECK_H_
 
-#include <netstd/stdint.h>
+#include <netif/if.h>
 #include <netipv4/ipv4.h>
 
-#define NETIF_IS_LOOPBACK 0x01
-
-struct netif_api;
-
-typedef const struct netif_api* netif_api_v;
-
-typedef struct netif{
-	void         *netif_inst;
-	netif_api_v  netif_class;
-	
-	struct netif *next;
-	
-	/* IPv4 specific. */
-	struct{
-		ipv4_addr_t address;
-		ipv4_addr_t netbroadcast;
-		ipv4_addr_t subnetbroadcast;
-		ipv4_addr_t subnet;
-	}ipv4;
-	
-	
-	/* Device specific. */
-	uint8_t flags;
-} netif_t;
-
+int netipv4_addr_is_broadcast(netif_t *nif,ipv4_addr_t addr);
 
 #endif
 

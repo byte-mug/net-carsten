@@ -34,6 +34,7 @@ file(GLOB C_SRC
 	# Network stack
 	src/netpkt/*.c
 	src/netif/*.c
+	src/netipv4/*.c
 	)
 
 add_executable(helloworld ${C_SRC})

@@ -91,6 +91,30 @@ int netpkt_pullup(netpkt_t *pkt,size_t len){
 	return 0;
 }
 
+void *netpkt_data(netpkt_t *pkt){
+	netpkt_seg_t *seg;
+	uint32_t      offset,P;
+	
+	offset = NETPKT_OFFSET(pkt);
+	
+	seg = pkt->segs;
+	
+	while( seg ){
+		P = NETPKT_SEG_LENGTH(seg);
+
+		/*
+		 * When offset is in [0,P) then stop.
+		 */
+		if( P > offset ) break;
+
+		offset -= P;
+		seg = seg->next;
+	}
+	
+	if( seg ) return seg->data_ptr+offset;
+	return (void*)0;
+}
+
 int netpkt_pullfront(netpkt_t *pkt,uint32_t len){
 	NETPKT_OFFSET(pkt) += len;
 	return 0;
@@ -99,6 +123,17 @@ int netpkt_pullfront(netpkt_t *pkt,uint32_t len){
 int netpkt_pushfront(netpkt_t *pkt,uint32_t len){
 	if( NETPKT_OFFSET(pkt) < len ) return -1;
 	NETPKT_OFFSET(pkt) -= len;
+	return 0;
+}
+
+int netpkt_levelup(netpkt_t *pkt){
+	uint32_t offset;
+
+	if(pkt->level >= 8)return -1;
+	offset = NETPKT_OFFSET(pkt);
+	pkt->level++;
+	NETPKT_OFFSET(pkt) = offset;
+
 	return 0;
 }
 

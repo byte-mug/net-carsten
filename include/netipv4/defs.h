@@ -38,6 +38,8 @@ inline static ipv4_addr_t ipv4_addr_init(uint8_t a,uint8_t b,uint8_t c,uint8_t d
 /* IPv4 Link-Local broadcast. RFC3927*/
 #define IP4_ADDR_LINK_LOCAL_BROADCAST   ipv4_addr_init(169,254,255,255)
 
+#define IP4_ADDR_BROADCAST   ipv4_addr_init(255,255,255,255)
+
 #define IP4_CHK_0 ipv4_addr_init(0x00,0,0,0)
 #define IP4_CHK_8 ipv4_addr_init(0x80,0,0,0)
 #define IP4_CHK_C ipv4_addr_init(0xC0,0,0,0)

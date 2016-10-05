@@ -20,11 +20,15 @@
 
 #include <netpkt/seg.h>
 
+#define NETPKT_FLAG_BROAD_L2  0x0001
+#define NETPKT_FLAG_BROAD_L3  0x0002
+
 typedef struct netpkt{
 	struct netpkt* next_chain;
 	netpkt_seg_t*  segs;
 	uint32_t       offset_length;
 	uint32_t       offsets[8];
+	uint16_t       flags;
 	uint8_t        level;
 } netpkt_t;
 
@@ -53,6 +57,20 @@ int netpkt_pullfront(netpkt_t *pkt,uint32_t len);
  * On success it returns 0, non-0 otherwise.
  */
 int netpkt_pushfront(netpkt_t *pkt,uint32_t len);
+
+/*
+ * Raises the pkt->level variable by 1 and copies the offset from the old to
+ * the new level.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
+int netpkt_levelup(netpkt_t *pkt);
+
+
+/*
+ * Gets the Data pointer to the current offset.
+ */
+void *netpkt_data(netpkt_t *pkt);
 
 /*
  * Frees an entire chain of network packets.
