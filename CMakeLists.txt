@@ -32,10 +32,11 @@ file(GLOB C_SRC
 	src/app/*.c
 	
 	# Network stack
-	src/netpkt/*.c
+	src/netarp/*.c
 	src/netif/*.c
 	src/netipv4/*.c
 	src/netipv6/*.c
+	src/netpkt/*.c
 	src/netprot/*.c
 	)
 

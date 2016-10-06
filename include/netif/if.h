@@ -20,11 +20,14 @@
 
 #include <netstd/stdint.h>
 #include <netipv4/ipv4.h>
+#include <netif/mac.h>
 
 #define NETIF_IS_LOOPBACK 0x01
 
 struct netif_api;
 struct netipv6_if;
+struct netarp_if;
+struct netnd6_if;
 
 typedef const struct netif_api* netif_api_v;
 
@@ -46,7 +49,12 @@ typedef struct netif{
 	
 	struct netipv6_if *ipv6;
 	
+	struct netarp_if  *arp;
+	
+	struct netnd6_if  *nd6;
+	
 	/* Device specific. */
+	mac_addr_t device_mac;
 	uint8_t flags;
 } netif_t;
 
