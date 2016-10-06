@@ -60,5 +60,11 @@
 
 #define IP6_ADDR_MULTICAST_SCOPE(a) ((a).addr[1])
 
+#define IP6_ADDR_IS_UNSPECIFIED(a) \
+    (((((a).addr32[0]) == 0U) &&	\
+      (((a).addr32[1]) == 0U) &&	\
+      (((a).addr32[2]) == 0U) &&	\
+      (((a).addr32[3]) == 0U)))
+
 #endif
 

@@ -15,6 +15,7 @@
  */
 #include <netprot/output.h>
 #include <netipv4/output.h>
+#include <netipv6/output.h>
 #include <netipv4/ipv4.h>
 #include <netipv6/ipv6.h>
 #include <netprot/checksum.h>
@@ -71,7 +72,11 @@ void netprot_ip_output(
 			(uint8_t*)&(dst_addr->ip.v6),
 			sizeof(ipv6_addr_t)
 			);
-		netpkt_free(pkt); // TODO IPv6 output.
+		/* XXX Add IPv6 specific netprot_opts fields. */
+		netipv6_output(nif,pkt,src_addr,dst_addr,protocol,
+			opts->ttl,  // TTL
+			0           // Traffic class
+		);
 	}
 }
 
