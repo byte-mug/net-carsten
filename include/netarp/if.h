@@ -23,6 +23,7 @@
 
 #include <netif/mac.h>
 #include <netipv4/ipv4.h>
+#include <netpkt/pkt.h>
 
 #define NETARP_TABLE_SIZE 16
 
@@ -30,11 +31,12 @@ typedef struct
 {
 	mac_addr_t  hard_addr;      /**< Hardware address.*/
 	ipv4_addr_t prot_addr;      /**< Protocol address.*/
+	netpkt_t    *hold;          /**< Last packet until resolved/timeout.*/
 #if 0
 	fnet_time_t     cr_time;        /**< Time of entry creation.*/
-	fnet_netbuf_t   *hold;          /**< Last packet until resolved/timeout.*/
 	fnet_time_t     hold_time;      /**< Time of the last request.*/
 #endif
+	unsigned    used : 1;
 	unsigned    resolved : 1;
 } fnet_arp_entry_t;
 
