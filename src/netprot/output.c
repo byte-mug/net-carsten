@@ -23,7 +23,9 @@
 
 static const struct netprot_opts np_defaults = {
 	.tos = 0,
-	.ttl = 255,
+	.ttl = 64,
+	.traf_cls = 0,
+	.hop_limit = 0,
 	.dont_fragment = 0,
 	.dont_route = 0,
 };
@@ -72,10 +74,9 @@ void netprot_ip_output(
 			(uint8_t*)&(dst_addr->ip.v6),
 			sizeof(ipv6_addr_t)
 			);
-		/* XXX Add IPv6 specific netprot_opts fields. */
 		netipv6_output(nif,pkt,src_addr,dst_addr,protocol,
-			opts->ttl,  // TTL
-			0           // Traffic class
+			opts->hop_limit,  // TTL
+			opts->traf_cls    // Traffic class
 		);
 	}
 }

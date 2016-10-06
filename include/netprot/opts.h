@@ -21,8 +21,12 @@
 #include <netstd/stdint.h>
 
 typedef struct netprot_opts {
-	uint8_t  tos;
-	uint8_t  ttl;
+	uint8_t  tos; /* IPv4 TOS */
+	uint8_t  ttl; /* IPv4 TTL */
+	
+	uint8_t  traf_cls;  /* IPv6 traffic class */
+	uint8_t  hop_limit; /* IPv6 hop limit (TTL) */
+	
 	unsigned dont_fragment : 1;
 	unsigned dont_route : 1;
 } netprot_opts_t;
