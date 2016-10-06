@@ -78,7 +78,6 @@ void netipv6_output(
 	ip6_header->source_addr       =  src_addr->ip.v6;
 	ip6_header->destination_addr  =  dst_ip;
 	
-	
 	total_length = NETPKT_LENGTH(pkt);
 	
 	if(total_length > nif->netif_mtu) /* IP Fragmentation. */
