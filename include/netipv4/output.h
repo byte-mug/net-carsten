@@ -15,8 +15,8 @@
  */
 
 
-#ifndef _NETIPV4_INPUT_H_
-#define _NETIPV4_INPUT_H_
+#ifndef _NETIPV4_OUTPUT_H_
+#define _NETIPV4_OUTPUT_H_
 
 #include <netif/if.h>
 #include <netpkt/pkt.h>
