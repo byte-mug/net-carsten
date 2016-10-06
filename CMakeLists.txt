@@ -35,6 +35,7 @@ file(GLOB C_SRC
 	src/netpkt/*.c
 	src/netif/*.c
 	src/netipv4/*.c
+	src/netipv6/*.c
 	src/netprot/*.c
 	)
 

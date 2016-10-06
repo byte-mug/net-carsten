@@ -22,6 +22,11 @@
 #include <netif/ifapi.h>
 #include <netprot/checksum.h>
 
+static uint16_t netipv4_next_id(netif_t *nif){
+	uint32_t nextid = (nif->ipv4_id++);
+	return (uint16_t)nextid;
+}
+
 void netipv4_output(
 	netif_t *nif,
 	netpkt_t *pkt,
@@ -31,8 +36,7 @@ void netipv4_output(
 	uint8_t tos,
 	uint8_t ttl,
 	char DF,
-	char do_not_route,
-	uint16_t *checksum
+	char do_not_route
 ){
 	fnet_ip_header_t   *ipheader;
 	uint16_t           fragment;
@@ -56,12 +60,6 @@ void netipv4_output(
 	
 	netpkt_leveldown(pkt);
 	
-	/* Pseudo checksum. */
-	if(checksum)
-	{
-		*checksum = netprot_checksum_pseudo_end( *checksum, (uint8_t*)&src_ip, (uint8_t*)&dst_ip, sizeof(ipv4_addr_t) );
-	}
-	
 	/* Construct IP header */
 	if( netpkt_pushfront( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
 	
@@ -78,7 +76,7 @@ void netipv4_output(
 	ipheader->desination_addr = dst_ip; /* destination address */
 	
 	ipheader->total_length = hton16((uint16_t)total_length);
-	//ipheader->id = fnet_htons(ip_id++);              /* Id */
+	ipheader->id = hton16(netipv4_next_id(nif)); /* Id */
 	
 	if(total_length > nif->netif_mtu) /* IP Fragmentation. */
 	{

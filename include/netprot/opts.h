@@ -15,40 +15,18 @@
  */
 
 
-#ifndef _NETIF_IF_H_
-#define _NETIF_IF_H_
+#ifndef _NETPROT_OPTS_H_
+#define _NETPROT_OPTS_H_
 
 #include <netstd/stdint.h>
-#include <netipv4/ipv4.h>
 
-#define NETIF_IS_LOOPBACK 0x01
+typedef struct netprot_opts {
+	uint8_t  tos;
+	uint8_t  ttl;
+	unsigned dont_fragment : 1;
+	unsigned dont_route : 1;
+} netprot_opts_t;
 
-struct netif_api;
-struct netipv6_if;
-
-typedef const struct netif_api* netif_api_v;
-
-typedef struct netif{
-	void         *netif_inst;
-	netif_api_v  netif_class;
-	size_t       netif_mtu;
-	
-	struct netif *next;
-	
-	/* IPv4 specific. */
-	struct{
-		ipv4_addr_t address;
-		ipv4_addr_t netbroadcast;
-		ipv4_addr_t subnetbroadcast;
-		ipv4_addr_t subnet;
-	}ipv4;
-	volatile uint32_t ipv4_id;
-	
-	struct netipv6_if *ipv6;
-	
-	/* Device specific. */
-	uint8_t flags;
-} netif_t;
 
 
 #endif

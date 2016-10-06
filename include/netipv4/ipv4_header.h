@@ -54,6 +54,5 @@ typedef struct NETSTD_PACKED
 #define FNET_IP_FLAG_MASK       (0xE000U)    /* mask for fragmenting bits */
 #define FNET_IP_OFFSET_MASK     (0x1fffU)    /* mask for fragmenting bits */
 
-
 #endif
 

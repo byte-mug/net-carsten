@@ -15,23 +15,32 @@
  */
 
 
-#ifndef _NETIPV4_INPUT_H_
-#define _NETIPV4_INPUT_H_
+#ifndef _NETPROT_OUTPUT_H_
+#define _NETPROT_OUTPUT_H_
 
 #include <netif/if.h>
 #include <netpkt/pkt.h>
 #include <netsock/addr.h>
 
-void netipv4_output(
+struct netprot_opts;
+
+/**
+ * @brief Submits an output packet to the IP stack.
+ * @param nif       network interface
+ * @param pkt       the packet (layer 4)
+ * @param protocol  The layer 4 protocol (eg. TCP, UDP, UDP-lite, SCTP, etc...)
+ * @param src_addr  The source address (local address)
+ * @param dst_addr  The destination address (remote address)
+ * @param checksum  A pointer to the Header Checksum
+ */
+void netprot_ip_output(
 	netif_t *nif,
 	netpkt_t *pkt,
+	uint8_t protocol,
 	net_sockaddr_t *src_addr,
 	net_sockaddr_t *dst_addr,
-	uint8_t protocol,
-	uint8_t tos,
-	uint8_t ttl,
-	char DF,
-	char do_not_route
+	uint16_t *checksum,
+	const struct netprot_opts *opts
 );
 
 #endif

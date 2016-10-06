@@ -14,42 +14,14 @@
  *   limitations under the License.
  */
 
+#include <netipv6/check.h>
 
-#ifndef _NETIF_IF_H_
-#define _NETIF_IF_H_
+int netipv6_addr_is_multicast(netif_t *nif,ipv6_addr_t *addr){
+}
 
-#include <netstd/stdint.h>
-#include <netipv4/ipv4.h>
-
-#define NETIF_IS_LOOPBACK 0x01
-
-struct netif_api;
-struct netipv6_if;
-
-typedef const struct netif_api* netif_api_v;
-
-typedef struct netif{
-	void         *netif_inst;
-	netif_api_v  netif_class;
-	size_t       netif_mtu;
-	
-	struct netif *next;
-	
-	/* IPv4 specific. */
-	struct{
-		ipv4_addr_t address;
-		ipv4_addr_t netbroadcast;
-		ipv4_addr_t subnetbroadcast;
-		ipv4_addr_t subnet;
-	}ipv4;
-	volatile uint32_t ipv4_id;
-	
-	struct netipv6_if *ipv6;
-	
-	/* Device specific. */
-	uint8_t flags;
-} netif_t;
-
-
-#endif
+/*
+ * Returns non-0 if the address is directed at ourself.
+ */
+int netipv6_addr_is_self(netif_t *nif,ipv6_addr_t *addr){
+}
 

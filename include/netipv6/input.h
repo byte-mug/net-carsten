@@ -15,41 +15,13 @@
  */
 
 
-#ifndef _NETIF_IF_H_
-#define _NETIF_IF_H_
+#ifndef _NETIPV6_INPUT_H_
+#define _NETIPV6_INPUT_H_
 
-#include <netstd/stdint.h>
-#include <netipv4/ipv4.h>
+#include <netif/if.h>
+#include <netpkt/pkt.h>
 
-#define NETIF_IS_LOOPBACK 0x01
-
-struct netif_api;
-struct netipv6_if;
-
-typedef const struct netif_api* netif_api_v;
-
-typedef struct netif{
-	void         *netif_inst;
-	netif_api_v  netif_class;
-	size_t       netif_mtu;
-	
-	struct netif *next;
-	
-	/* IPv4 specific. */
-	struct{
-		ipv4_addr_t address;
-		ipv4_addr_t netbroadcast;
-		ipv4_addr_t subnetbroadcast;
-		ipv4_addr_t subnet;
-	}ipv4;
-	volatile uint32_t ipv4_id;
-	
-	struct netipv6_if *ipv6;
-	
-	/* Device specific. */
-	uint8_t flags;
-} netif_t;
-
+void netipv6_input( netif_t *netif, netpkt_t *pkt );
 
 #endif
 
