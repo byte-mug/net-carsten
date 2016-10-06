@@ -94,13 +94,6 @@ void netipv6_input( netif_t *netif, netpkt_t *pkt ){
 	 * there is an unknown extension header between the IPv6 and TCP headers.
 	 */
 	
-	/*
-	 * Remember the current offset in the packet.
-	 */
-	netpkt_levelup(pkt);
-	
-	if( netpkt_pullfront(pkt,(uint32_t)header_length) ) goto DROP;
-	
 	netprot_input(netif,pkt,next_header,&src_addr,&dst_addr);
 	
 	/* RFC 2460 4:If, as a result of processing a header, a node is required to proceed
