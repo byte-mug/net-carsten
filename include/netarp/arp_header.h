@@ -31,11 +31,11 @@
  ******************************************************************************/
 typedef struct NETSTD_PACKED
 {
-    uint16_t   hard_type ;          /**< The type of hardware address (=1 for Ethernet).*/
-    uint16_t   prot_type ;          /**< The type of protocol address (=0x0800 for IP).*/
-    uint8_t    hard_size ;          /**< The size in bytes of the hardware address (=6).*/
-    uint8_t    prot_size ;          /**< The size in bytes of the protocol address (=4).*/
-    uint16_t   op ;                 /**< Opcode.*/
+    uint16_t    hard_type ;         /**< The type of hardware address (=1 for Ethernet).*/
+    uint16_t    prot_type ;         /**< The type of protocol address (=0x0800 for IP).*/
+    uint8_t     hard_size ;         /**< The size in bytes of the hardware address (=6).*/
+    uint8_t     prot_size ;         /**< The size in bytes of the protocol address (=4).*/
+    uint16_t    op ;                /**< Opcode.*/
     mac_addr_t  sender_hard_addr ;  /**< Hardware address of sender of this packet.*/
     ipv4_addr_t sender_prot_addr ;  /**< Protocol address of sender of this packet.*/
     mac_addr_t  target_hard_addr ;  /**< Hardware address of target of this packet.*/
