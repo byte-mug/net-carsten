@@ -58,7 +58,7 @@ void netipv4_output(
 	fragment = 0;
 	if( DF ) fragment |= FNET_IP_DF;
 	
-	netpkt_leveldown(pkt);
+	if( netpkt_leveldown(pkt) ) goto DROP;
 	
 	/* Construct IP header */
 	if( netpkt_pushfront( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
