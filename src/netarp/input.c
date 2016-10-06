@@ -20,7 +20,6 @@
 #include <netarp/input.h>
 #include <netarp/table.h>
 #include <netarp/arp_header.h>
-#include <netarp/if.h>
 #include <netif/ifapi.h>
 
 #include <netstd/endianness.h>
@@ -29,7 +28,6 @@ void netarp_input( netif_t *netif, netpkt_t *pkt ){
 	netpkt_t            *chain;
 	netpkt_t            *tail;
 	fnet_arp_header_t   *arp_hdr;
-	//mac_addr_t          local_addr;
 	ipv4_addr_t         sender_prot_addr;
 	ipv4_addr_t         target_prot_addr;
 	mac_addr_t          sender_hard_addr;
@@ -73,7 +71,6 @@ void netarp_input( netif_t *netif, netpkt_t *pkt ){
 		netif->netif_class->ifapi_send_l2(netif,pkt,&sender_hard_addr);
 		return;
 	}
-	
 	
 DROP:
 	netpkt_free(pkt);
