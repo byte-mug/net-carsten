@@ -31,11 +31,11 @@ void netipv6_input( netif_t *netif, netpkt_t *pkt ){
 	net_sockaddr_t      src_addr;
 	net_sockaddr_t      dst_addr;
 	uint8_t             next_header; /* aka 'protocol' */
-	//if(!( netif->ipv6 )) goto DROP;
 
 	/* RFC 4862: By disabling IP operation,
          * silently drop any IP packets received on the interface.*/
-	if( (netif->ipv6) && (netif->ipv6->disabled) ) goto DROP;
+	if(!( netif->ipv6 )) goto DROP;
+	if( netif->ipv6->disabled ) goto DROP;
 	
 	/* The header must reside in contiguous area of memory. */
 	if( netpkt_pullup(pkt,sizeof(fnet_ip6_header_t)) ) goto DROP;
