@@ -17,9 +17,9 @@
  */
 
 #include <netipv6/input.h>
-#include <netipv6/if.h>
 #include <netipv6/ipv6_header.h>
 #include <netipv6/check.h>
+#include <netipv6/defs.h>
 #include <netprot/input.h>
 #include <netstd/endianness.h>
 
@@ -34,8 +34,7 @@ void netipv6_input( netif_t *netif, netpkt_t *pkt ){
 
 	/* RFC 4862: By disabling IP operation,
          * silently drop any IP packets received on the interface.*/
-	if(!( netif->ipv6 )) goto DROP;
-	if( netif->ipv6->disabled ) goto DROP;
+	if( netipv6_deactivated(netif) ) goto DROP;
 	
 	/* The header must reside in contiguous area of memory. */
 	if( netpkt_pullup(pkt,sizeof(fnet_ip6_header_t)) ) goto DROP;
@@ -66,9 +65,16 @@ void netipv6_input( netif_t *netif, netpkt_t *pkt ){
 	next_header    = hdr->next_header;
 	
 	if(
-		netipv6_addr_is_multicast(netif,&(src_addr.ip.v6))||
-		(!netipv6_addr_is_self(netif,&(dst_addr.ip.v6)))
+		IP6_ADDR_IS_MULTICAST(src_addr.ip.v6)||
+		(!netipv6_addr_is_self(netif,&(dst_addr.ip.v6),pkt->flags))
 	) goto DROP;
+	
+	/*
+	 * Notify upper layer protocols, that the incoming datagram has a
+	 * multicast address.
+	 */
+	if( IP6_ADDR_IS_MULTICAST(dst_addr.ip.v6) )
+		pkt->flags |= NETPKT_FLAG_BROAD_L3;
 	
 	/*
 	 * Remember the current offset in the packet.

@@ -19,11 +19,9 @@
 #define _NETPKT_PKT_H_
 
 #include <netpkt/seg.h>
+#include <netpkt/flags.h>
 
 #define NETPKT_MAX_LEVELS 8
-
-#define NETPKT_FLAG_BROAD_L2  0x0001
-#define NETPKT_FLAG_BROAD_L3  0x0002
 
 typedef struct netpkt{
 	struct netpkt* next_chain;

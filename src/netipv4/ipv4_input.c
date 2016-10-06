@@ -62,11 +62,21 @@ void netipv4_input( netif_t *netif, netpkt_t *pkt ){
 	/* Loopback packets skip the address validation. */
 	if( netif->flags & NETIF_IS_LOOPBACK ) goto CHECK_DONE;
 	
+	/*
+	 * Notify upper layer protocols, that the incoming datagram has a
+	 * multicast address.
+	 */
 	if(
 		netipv4_addr_is_broadcast(netif,destination_addr)||
 		/* ((destination_addr==0u) && pkt->flags & NETPKT_FLAG_BROAD_L2 )|| */
 		(IP4_ADDR_IS_MULTICAST(destination_addr))
 	) pkt->flags |= NETPKT_FLAG_BROAD_L3;
+	
+	/*
+	 * To protect from "hole-196" attacks, this packet may not be an L3 unicast, so drop.
+	 */
+	if( (pkt->flags & NETPKT_FLAG_NO_UNICAST_L3) && !(pkt->flags & NETPKT_FLAG_BROAD_L3) )
+		goto DROP;
 	
 	/* If not for me, drop! */
 	if(!(

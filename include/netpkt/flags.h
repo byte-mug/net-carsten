@@ -15,18 +15,21 @@
  */
 
 
-#ifndef _NETIPV6_CHECK_H_
-#define _NETIPV6_CHECK_H_
+#ifndef _NETPKT_FLAGS_H_
+#define _NETPKT_FLAGS_H_
 
-#include <netif/if.h>
-#include <netipv6/ipv6.h>
+#include <netpkt/seg.h>
 
-int netipv6_deactivated(netif_t *nif);
+#define NETPKT_MAX_LEVELS 8
+
+#define NETPKT_FLAG_BROAD_L2      0x0001
+#define NETPKT_FLAG_BROAD_L3      0x0002
 
 /*
- * Returns non-0 if the address is directed at ourself.
+ * To protect against "hole-196", some wireless network interfaces may ban
+ * Unicast IP packets encapsulated in a multicast Layer 2 frame.
  */
-int netipv6_addr_is_self(netif_t *nif, ipv6_addr_t *addr, uint16_t pkt_flags);
+#define NETPKT_FLAG_NO_UNICAST_L3 0x0004
 
 #endif
 
