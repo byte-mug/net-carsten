@@ -73,7 +73,7 @@ void netipv6_input( netif_t *netif, netpkt_t *pkt ){
 	/*
 	 * Remember the current offset in the packet.
 	 */
-	netpkt_levelup(pkt);
+	if( netpkt_levelup(pkt) ) goto DROP;
 	
 	if( netpkt_pullfront(pkt, sizeof(fnet_ip6_header_t) ) ) goto DROP;
 	

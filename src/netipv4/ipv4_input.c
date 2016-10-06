@@ -97,7 +97,7 @@ CHECK_DONE:
 	/*
 	 * Remember the current offset in the packet.
 	 */
-	netpkt_levelup(pkt);
+	if( netpkt_levelup(pkt) ) goto DROP;
 	
 	if( netpkt_pullfront(pkt,(uint32_t)header_length) ) goto DROP;
 	
