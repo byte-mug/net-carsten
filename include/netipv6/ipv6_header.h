@@ -84,12 +84,42 @@ typedef struct NETSTD_PACKED
 #define FNET_IP6_TYPE_AUTHENTICATION_HEADER                  (51U)
 #define FNET_IP6_TYPE_ENCAPSULATION_SECURITY_PAYLOAD_HEADER  (50U)
 #define FNET_IP6_TYPE_MOBILITY_HEADER                        (135U)
-#define FNET_IP6_TYPE_NO_NEXT_HEADER                         (59U)   /* RFC 2460: The value 59 in the Next Header field of an IPv6 header or any
+#define FNET_IP6_TYPE_NO_NEXT_HEADER                         (59U) /* RFC 2460: The value 59 in the Next Header field of an IPv6 header or any
                                                                     * extension header indicates that there is nothing following that
                                                                     * header. If the Payload Length field of the IPv6 header indicates the
                                                                     * presence of octets past the end of a header whose Next Header field
                                                                     * contains 59, those octets must be ignored.*/
 
+
+/***********************************************************************
+ * This header format is used by the following extension headers:
+ * - Hop-by-Hop Options Header     (next_header=0)
+ * - Routing Header                (next_header=43)
+ * - Destination Options Header    (next_header=60)
+ *
+ * The Hop-by-Hop Options header is used to carry optional information
+ * that must be examined by every node along a packet's delivery path.
+ ***********************************************************************
+ * RFC 2460 4.3, 4.4 and 4.6:
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  | Next Header   | Hdr Ext Len   |                               |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+ *  |                                                               |
+ *  .                                                               .
+ *  .                      . . . . . . . .                          .
+ *  .                                                               .
+ *  |                                                               |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ ***********************************************************************/
+typedef struct NETSTD_PACKED
+{
+    uint8_t   next_header     ;   /* 8-bit selector. Identifies the type of header
+                                   * immediately following the Options
+                                   * header. */
+    uint8_t   hdr_ext_length  ;   /* 8-bit unsigned integer. Length of the Hop-by-
+                                   * Hop Options header in 8-octet units, not
+                                   * including the first 8 octets. */
+} netipv6_ext_generic_t;
 
 #endif
 

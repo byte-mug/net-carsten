@@ -21,6 +21,7 @@
 #include <netipv6/ipv6_header.h>
 #include <netipv6/check.h>
 #include <netipv6/defs.h>
+#include <netipv6/exthdr.h>
 #include <netprot/input.h>
 #include <netstd/endianness.h>
 
@@ -87,8 +88,8 @@ void netipv6_input( netif_t *netif, netpkt_t *pkt ){
 	/********************************************
 	 * Extension headers processing.
 	 *********************************************/
-	/* */
-	/* if(fnet_ip6_ext_header_process(netif, &next_header, &(src_addr.ip.v6), &(dst_addr.ip.v6), &pkt, ip6_nb) == FNET_ERR) return; */
+	netipv6_ext_header_process(netif, &next_header, &(src_addr.ip.v6), &(dst_addr.ip.v6), &pkt);
+	if(! pkt ) return;
 	
 	/* Note: (http://www.cisco.com/web/about/ac123/ac147/archived_issues/ipj_9-3/ipv6_internals.html)
 	 * Note that there is no standard extension header format, meaning that when a host
