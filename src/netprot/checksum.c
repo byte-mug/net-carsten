@@ -102,6 +102,40 @@ static uint32_t fnet_checksum_pkt(netpkt_t *pkt, size_t length){
 	return sum;
 }
 
+uint16_t netprot_checksum_buf(void* ptr, size_t len)
+{
+    uint32_t sum = fnet_checksum_low(0, len, ptr);
+
+    /* Add potential carries - no branches. */
+
+    sum += 0xffffU; /* + 0xffff acording to RFC1624*/
+
+    /* Add accumulated carries */
+    while ((sum >> 16) != 0u)
+    {
+        sum = (sum & 0xffffu) + (sum >> 16);
+    }
+
+    return (uint16_t)(0xffffu & ~sum);
+}
+
+uint16_t netprot_checksum(netpkt_t *pkt, size_t len)
+{
+    uint32_t sum = fnet_checksum_pkt(pkt, len);
+
+    /* Add potential carries - no branches. */
+
+    sum += 0xffffU; /* + 0xffff acording to RFC1624*/
+
+    /* Add accumulated carries */
+    while ((sum >> 16) != 0u)
+    {
+        sum = (sum & 0xffffu) + (sum >> 16);
+    }
+
+    return (uint16_t)(0xffffu & ~sum);
+}
+
 uint16_t netprot_checksum_pseudo_start( netpkt_t *pkt, uint8_t protocol, uint16_t protocol_len ){
 	netpkt_seg_t *seg;
 	const uint16_t *begin,*end;

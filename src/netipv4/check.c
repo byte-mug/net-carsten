@@ -1,5 +1,6 @@
 /*
  *   Copyright 2016 Simon Schmidt
+ *   Copyright 2011-2016 by Andrey Butok. FNET Community.
  *   Copyright 2008-2010 by Andrey Butok. Freescale Semiconductor, Inc.
  *   Copyright 2003 by Andrey Butok. Motorola SPS.
  *
@@ -35,4 +36,18 @@ int netipv4_addr_is_broadcast(netif_t *nif,ipv4_addr_t addr){
 	return 0;
 }
 
+int netipv4_addr_is_onlink(netif_t *nif,ipv4_addr_t addr){
+	
+	return (
+		/*
+		 * Is the IPv4 address on-link?
+		 */
+		IP4ADDR_EQ( (nif->ipv4.subnetmask & addr) , nif->ipv4.subnet ) ||
+		/* RFC3927: If the destination address is in the 169.254/16 prefix, then the sender
+		 * MUST send its packet directly to the destination on the same physical link.  This MUST be
+		 * done whether the interface is configured with a Link-Local or a routable IPv4 address.
+		 */
+		IP4_ADDR_IS_LINK_LOCAL( addr )
+	);
+}
 

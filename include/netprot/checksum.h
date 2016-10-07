@@ -17,12 +17,14 @@
  */
 
 
-#ifndef _NETPROT_INPUT_H_
-#define _NETPROT_INPUT_H_
+#ifndef _NETPROT_CHECKSUM_H_
+#define _NETPROT_CHECKSUM_H_
 
 #include <netstd/stdint.h>
 #include <netpkt/pkt.h>
 
+uint16_t netprot_checksum_buf(void* ptr, size_t len);
+uint16_t netprot_checksum(netpkt_t *pkt, size_t len);
 uint16_t netprot_checksum_pseudo_start( netpkt_t *pkt, uint8_t protocol, uint16_t protocol_len );
 uint16_t netprot_checksum_pseudo_end( uint16_t sum_s, const uint8_t *ip_src, uint8_t *ip_dest, size_t addr_size );
 

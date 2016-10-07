@@ -22,6 +22,7 @@
 
 #include <netsock/addr.h>
 #include <netprot/input.h>
+#include <netprot/checksum.h>
 
 #include <netstd/endianness.h>
 
@@ -55,8 +56,8 @@ void netipv4_input( netif_t *netif, netpkt_t *pkt ){
 		(header_length < sizeof(fnet_ip_header_t) )||
 		(total_length < header_length)||
 		(pkt_length  < total_length)||
-		(FNET_IP_HEADER_GET_VERSION(hdr) != 4u)
-		/* (fnet_checksum(nb, header_length) != 0u) */
+		(FNET_IP_HEADER_GET_VERSION(hdr) != 4u)||
+		(netprot_checksum(pkt, header_length) != 0u)
 	)goto DROP;
 	
 	/* Loopback packets skip the address validation. */

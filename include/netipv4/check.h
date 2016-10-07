@@ -22,6 +22,7 @@
 #include <netipv4/ipv4.h>
 
 int netipv4_addr_is_broadcast(netif_t *nif,ipv4_addr_t addr);
+int netipv4_addr_is_onlink(netif_t *nif,ipv4_addr_t addr);
 
 #endif
 

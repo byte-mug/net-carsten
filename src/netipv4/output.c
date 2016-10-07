@@ -1,5 +1,6 @@
 /*
  *   Copyright 2016 Simon Schmidt
+ *   Copyright 2011-2016 by Andrey Butok. FNET Community.
  *   Copyright 2008-2010 by Andrey Butok. Freescale Semiconductor, Inc.
  *   Copyright 2003 by Andrey Butok. Motorola SPS.
  *
@@ -16,7 +17,8 @@
  *   limitations under the License.
  */
 #include <netipv4/output.h>
-//#include <netipv4/defs.h>
+#include <netipv4/defs.h>
+#include <netipv4/check.h>
 #include <netipv4/ipv4_header.h>
 #include <netstd/endianness.h>
 #include <netif/ifapi.h>
@@ -43,6 +45,7 @@ void netipv4_output(
 	uint32_t           total_length;
 	ipv4_addr_t        src_ip;
 	ipv4_addr_t        dst_ip;
+	ipv4_addr_t        send_addr;
 	
 	src_ip = src_addr->ip.v4;
 	dst_ip = dst_addr->ip.v4;
@@ -60,6 +63,11 @@ void netipv4_output(
 	
 	if( netpkt_leveldown(pkt) ) goto DROP;
 	
+	if( do_not_route || netipv4_addr_is_onlink(nif,dst_ip) || IP4_ADDR_IS_MULTICAST(dst_ip) )
+		send_addr = dst_ip;
+	else
+		send_addr = nif->ipv4.gateway;
+	
 	/* Construct IP header */
 	if( netpkt_pushfront( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
 	
@@ -69,21 +77,26 @@ void netipv4_output(
 	
 	ipheader->flags_fragment_offset = hton16(fragment);
 	
-	ipheader->tos = tos;                /* Type of service */
-	ipheader->ttl = ttl;                /* time to live */
-	ipheader->protocol = protocol;      /* protocol */
-	ipheader->source_addr = src_ip;     /* source address */
-	ipheader->desination_addr = dst_ip; /* destination address */
+	ipheader->version__header_length = 0x45;  /* Version=4 ; IHL=5 */
+	ipheader->tos = tos;                      /* Type of service */
+	ipheader->flags_fragment_offset = 0;      /* flags & fragment offset field (measured in 8-byte order).*/
+	ipheader->ttl = ttl;                      /* time to live */
+	ipheader->protocol = protocol;            /* protocol */
+	
+	ipheader->source_addr = src_ip;           /* source address */
+	ipheader->desination_addr = dst_ip;       /* destination address */
 	
 	ipheader->total_length = hton16((uint16_t)total_length);
 	ipheader->id = hton16(netipv4_next_id(nif)); /* Id */
+	ipheader->checksum = 0;
+	ipheader->checksum = netprot_checksum_buf((void*)ipheader,sizeof(fnet_ip_header_t));
 	
 	if(total_length > nif->netif_mtu) /* IP Fragmentation. */
 	{
 		// TODO: IP fragmentation
 		goto DROP;
 	}else{
-		nif->netif_class->ifapi_send_l3_ipv4(nif,pkt,&dst_ip);
+		nif->netif_class->ifapi_send_l3_ipv4(nif,pkt,&send_addr);
 	}
 	
 DROP:

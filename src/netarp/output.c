@@ -44,8 +44,6 @@ void netarp_request( netif_t *netif, ipv4_addr_t ipaddr ){
 	
 	arp_hdr->op = hton16(FNET_ARP_OP_REQUEST); /* Opcode. */
 	
-	//fnet_netif_get_hw_addr(netif, sender_addr, sizeof(fnet_mac_addr_t));
-	
 	arp_hdr->target_hard_addr = mac_none;
 	arp_hdr->sender_hard_addr = netif->device_mac;
 	
@@ -54,3 +52,5 @@ void netarp_request( netif_t *netif, ipv4_addr_t ipaddr ){
 	
 	netif->netif_class->ifapi_send_l2(netif,pkt,&sender_addr);
 }
+
+

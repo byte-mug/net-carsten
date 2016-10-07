@@ -44,6 +44,8 @@ typedef struct netif{
 		ipv4_addr_t netbroadcast;
 		ipv4_addr_t subnetbroadcast;
 		ipv4_addr_t subnet;
+		ipv4_addr_t subnetmask;
+		ipv4_addr_t gateway;
 	}ipv4;
 	volatile uint32_t ipv4_id;
 	

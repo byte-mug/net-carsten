@@ -56,6 +56,8 @@ inline static ipv4_addr_t ipv4_addr_init(uint8_t a,uint8_t b,uint8_t c,uint8_t d
 #define IP4_ADDR_IS_MULTICAST(i) IP4_CLASS_D(i)
 #define IP4_ADDR_IS_UNSPECIFIED(i) ((i)==0u)
 
+#define IP4_ADDR_IS_LINK_LOCAL(i) (( (i) & ipv4_addr_init(0xff,0xff,0,0) )==IP4_ADDR_LINK_LOCAL_PREFIX)
+
 #define IP4_EXPERIMENTAL(i) IP4_CLASS_E(i)
 #define IP4_BADCLASS(i)     IP4_CLASS_E(i)
 
