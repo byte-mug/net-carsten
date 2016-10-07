@@ -61,7 +61,7 @@ void neticmp_input(netif_t *nif,netpkt_t *pkt, net_sockaddr_t *src_addr, net_soc
 		 * multicast address MAY be silently discarded.(RFC1122)*/
 		if(pkt->flags & NETPKT_FLAG_BROAD_L3) goto DROP;
 		hdr->type = FNET_ICMP_ECHOREPLY;
-		neticmp_output(nif,pkt,src_addr,dst_addr);
+		neticmp_output(nif,pkt,dst_addr,src_addr);
 		break;
 		
 	/**************************
