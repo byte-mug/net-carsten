@@ -44,15 +44,21 @@ void netarp_input( netif_t *netif, netpkt_t *pkt ){
 	
 	/* Check Duplicate IP address.*/
 	if (!IP4ADDR_EQ(sender_prot_addr,netif->ipv4.address)){
-		/* It's for me. */
-		create = IP4ADDR_EQ(target_prot_addr,netif->ipv4.address) ? 1 : 0;
+		/*
+		 * If the target protocol address is ours, we're going to create a new ARP
+		 * cache entry. Otherwise we update it, if it exists.
+		 */
+		create = IP4ADDR_EQ(target_prot_addr,netif->ipv4.address) ? 1 : 0; /* It's for me. */
+		
+		/*
+		 * Create or update ARP entry.
+		 */
 		chain = netarp_tab_update(netif,sender_prot_addr,sender_hard_addr,create);
-		while(chain){
-			tail = chain->next_chain;
-			chain->next_chain = 0;
-			netif->netif_class->ifapi_send_l2(netif,pkt,&sender_hard_addr);
-			chain = tail;
-		}
+		
+		/*
+		 * Send all network packets out to the 'sender_hard_addr'.
+		 */
+		netif->netif_class->ifapi_send_l2_all(netif,pkt,&sender_hard_addr);
 	}else{
 		// TODO: duplicate address detection.
 	}

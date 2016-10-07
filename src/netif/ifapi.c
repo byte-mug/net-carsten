@@ -27,6 +27,18 @@ void netif_api_send_l2(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr){
 }
 
 /**
+ * @brief Default implementation of netif_api->ifapi_send_l2_all.
+ * @param nif   netif-instance
+ * @param pkt   network packet
+ * @param addr  destination mac-address
+ *
+ * This function sends an entire chain of packets at once.
+ */
+void netif_send_l2_all(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr){
+	netpkt_free_all(pkt);
+}
+
+/**
  * @brief Default implementation of netif_api->ifapi_send_l3_ipv4.
  * @param nif   netif-instance
  * @param pkt   network packet

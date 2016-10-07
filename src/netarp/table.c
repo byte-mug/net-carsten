@@ -64,10 +64,21 @@ netpkt_t *netarp_tab_update( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t h
 	
 	i = netarp_tab_find(arpif,prot_addr,create);
 	
+	/*
+	 * If there is no such entry, quit the function.
+	 */
 	if(i==NETARP_TABLE_SIZE) goto ENDFUNC;
 	
-	chain = arpif->arp_table[i].hold;
+	/*
+	 * Update ARP entry.
+	 */
+	arpif->arp_table[i].hard_addr = hard_addr;
+	arpif->arp_table[i].resolved = 1;
 	
+	/*
+	 * Pull the ARP entry's send queue.
+	 */
+	chain = arpif->arp_table[i].hold;
 	arpif->arp_table[i].hold = 0;
 	
 ENDFUNC:
