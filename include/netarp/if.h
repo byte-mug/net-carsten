@@ -25,6 +25,8 @@
 #include <netipv4/ipv4.h>
 #include <netpkt/pkt.h>
 
+#include <netstd/mutex.h>
+
 #define NETARP_TABLE_SIZE 16
 
 typedef struct
@@ -41,6 +43,7 @@ typedef struct
 } fnet_arp_entry_t;
 
 typedef struct netarp_if{
+	net_mutex_t         arp_lock;
 	fnet_arp_entry_t    arp_table[NETARP_TABLE_SIZE];   /* ARP cache table.*/
 	ipv4_addr_t         arp_probe_ipaddr;               /* ARP probe address.*/
 } netarp_if_t;

@@ -58,14 +58,20 @@ netpkt_t *netarp_tab_update( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t h
 	netpkt_t      *chain;
 	
 	arpif = netif->arp;
+	chain = 0;
+	
+	net_mutex_lock(arpif->arp_lock);
 	
 	i = netarp_tab_find(arpif,prot_addr,create);
 	
-	if(i==NETARP_TABLE_SIZE) return 0;
+	if(i==NETARP_TABLE_SIZE) goto ENDFUNC;
 	
 	chain = arpif->arp_table[i].hold;
 	
 	arpif->arp_table[i].hold = 0;
+	
+ENDFUNC:
+	net_mutex_unlock(arpif->arp_lock);
 	
 	return chain;
 }

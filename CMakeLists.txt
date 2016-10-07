@@ -24,13 +24,19 @@ endif()
 
 add_definitions(-D__HAS_BSWAP__)
 
-
 include_directories( ./include )
 
-file(GLOB C_SRC
+file(GLOB APP_SRC
 	# App.
 	src/app/*.c
-	
+	)
+
+file(GLOB API_SRC
+	# App.
+	src/apiposix/*.c
+	)
+
+file(GLOB NET_SRC
 	# Network stack
 	src/netarp/*.c
 	src/netif/*.c
@@ -40,5 +46,5 @@ file(GLOB C_SRC
 	src/netprot/*.c
 	)
 
-add_executable(helloworld ${C_SRC})
-
+add_executable(helloworld ${APP_SRC} ${API_SRC} ${NET_SRC})
+target_link_libraries(helloworld pthread)
