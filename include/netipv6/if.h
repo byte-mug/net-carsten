@@ -47,8 +47,10 @@ typedef struct netipv6_if_addr
 
 typedef struct netipv6_if {
 	netipv6_if_addr_t addrs[NETIPV6_IF_ADDR_MAX];
-	uint8_t hop_limit;
-	unsigned disabled : 1; /* < IPv6 is Disabled*/
+	uint8_t           hop_limit;
+	size_t            pmtu;
+	unsigned          disabled : 1; /* < IPv6 is Disabled*/
+	unsigned          pmtu_on : 1; /* < IPv6/ICMPv6 PMTU Enabled*/
 } netipv6_if_t;
 
 #endif
