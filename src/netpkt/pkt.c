@@ -190,6 +190,26 @@ int netpkt_leveldown(netpkt_t *pkt){
 }
 
 /*
+ * Depending on 'direction' this function performs the following task:
+ *
+ * 'direction < 0': It lowers the pkt->level variable by 1.
+ *
+ * Otherwise it raises the pkt->level variable by 1.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
+int netpkt_switchlevel(netpkt_t *pkt,int direction){
+	if(direction<0){
+		if( pkt->level == 0)return -1;
+		pkt->level--;
+	}else{
+		if(pkt->level >= NETPKT_MAX_LEVELS)return -1;
+		pkt->level++;
+	}
+	return 0;
+}
+
+/*
  * Frees an entire chain of network packets.
  */
 void netpkt_free_all(netpkt_t *pkt){

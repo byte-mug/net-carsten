@@ -80,6 +80,17 @@ int netpkt_levelup(netpkt_t *pkt);
 int netpkt_leveldown(netpkt_t *pkt);
 
 /*
+ * Depending on 'direction' this function performs the following task:
+ *
+ * 'direction < 0': It lowers the pkt->level variable by 1.
+ *
+ * Otherwise it raises the pkt->level variable by 1.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
+int netpkt_switchlevel(netpkt_t *pkt,int direction);
+
+/*
  * Gets the Data pointer to the current offset.
  */
 void *netpkt_data(netpkt_t *pkt);

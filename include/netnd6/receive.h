@@ -15,30 +15,17 @@
  */
 
 
-#ifndef _NETIPV6_CHECK_H_
-#define _NETIPV6_CHECK_H_
+#ifndef _NETND6_RECEIVE_H_
+#define _NETND6_RECEIVE_H_
 
 #include <netif/if.h>
+#include <netpkt/pkt.h>
 #include <netipv6/ipv6.h>
 
-struct netipv6_if_addr;
-
-int netipv6_deactivated(netif_t *nif);
-
-/*
- * Returns non-0 if the address is directed at ourself.
- */
-int netipv6_addr_is_self(netif_t *nif, ipv6_addr_t *addr, uint16_t pkt_flags);
-
-/*
- * Returns non-0 if the address is our IPv6 Solicited Multicast.
- */
-int netipv6_addr_is_own_ip6_solicited_multicast(netif_t *nif, ipv6_addr_t *addr);
-
-/*
- * Returns an IPv6-address entry from the netif_t object.
- */
-struct netipv6_if_addr* netipv6_get_address_info(netif_t *nif, ipv6_addr_t *addr);
+void netnd6_neighbor_solicitation_reveive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
+void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
+void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
+void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
 
 #endif
 

@@ -94,3 +94,23 @@ int netipv6_addr_is_self(netif_t *nif, ipv6_addr_t *addr, uint16_t pkt_flags){
 	return 0;
 }
 
+int netipv6_addr_is_own_ip6_solicited_multicast(netif_t *nif, ipv6_addr_t *addr){
+	// TODO: implement
+	return 0;
+}
+
+struct netipv6_if_addr* netipv6_get_address_info(netif_t *nif, ipv6_addr_t *addr){
+	int i;
+	netipv6_if_t* nif6;
+	
+	nif6 = nif->ipv6;
+	
+	for(i=0;i<NETIPV6_IF_ADDR_MAX;++i){
+		/* Skip NOT_USED addresses. */
+		if( !nif6->addrs[i].used ) continue;
+		
+		/* Match the current Network address. */
+		if( IP6ADDR_EQ(*addr,nif6->addrs[i].address) ) return &nif6->addrs[i];
+	}
+	return 0;
+}
