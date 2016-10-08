@@ -565,7 +565,7 @@ void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t
 	uint32_t                   pkt_reachable_time, pkt_retrans_timer, pkt_router_lifetime;
 	fnet_nd6_neighbor_entry_t  *neighbor_cache_entry;
 	ipv6_addr_t                queue_addr;
-	netpkt_t                   *pkts;  /* Send-Chain. */
+	netpkt_t                   *pkts = 0;  /* Send-Chain. */
 	
 	/*
 	 * Validation RFC4861 (6.1.2).
@@ -941,6 +941,8 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 	mac_addr_t                     tlla_addr;
 	fnet_nd6_option_lla_header_t   *hdr_tlla;
 	fnet_nd6_neighbor_entry_t      *neighbor_cache_entry;
+	ipv6_addr_t                    queue_addr;
+	netpkt_t                       *pkts = 0;  /* Send-Chain. */
 	
 	/*
 	 * Validation RFC4861 (8.1.1).
@@ -1015,7 +1017,6 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 			nd_option_tlla = 1;
 			hdr_tlla = netpkt_data(pkt);
 			tlla_addr = AS_MAC(hdr_tlla->addr);
-			//netnd6_nsol_handle_lla(nif,size,netpkt_data(pkt),src_ip);
 		}
 		/* else, silently ignore any options they do not recognize
 		 * and continue processing the message.
@@ -1034,7 +1035,7 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 			/*  If a Neighbor Cache entry is
 			 * created for the target, its reachability state MUST be set to STALE
 			 * as specified in Section 7.3.3. */
-			neighbor_cache_entry = netnd6_neighbor_cache_add(nif,&target_addr, &tlla_addr, FNET_ND6_NEIGHBOR_STATE_STALE);
+			neighbor_cache_entry = netnd6_neighbor_cache_add(nif, &target_addr, &tlla_addr, FNET_ND6_NEIGHBOR_STATE_STALE);
 		}
 		else
 		{
@@ -1048,8 +1049,38 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 			}
 		}
 		
+		/* Sends any packets queued for the neighbor awaiting address resolution.
+		 */
+		pkts = neighbor_cache_entry->waiting_pkts;
+		neighbor_cache_entry->waiting_pkts = 0;
+		queue_addr = neighbor_cache_entry->ip_addr;
 	}
+	else
+	{
+		if(! neighbor_cache_entry )
+		{
+			/*  If a Neighbor Cache entry is
+			 * created for the target, its reachability state MUST be set to STALE
+			 * as specified in Section 7.3.3. */
+			neighbor_cache_entry = netnd6_neighbor_cache_add(nif, &target_addr, /*NULLPTR*/0, FNET_ND6_NEIGHBOR_STATE_STALE);
+		}
+	}
+	
+	/* If the Target Address is not the same
+	 * as the Destination Address, the host MUST set IsRouter to TRUE for
+	 * the target.*/
+	if( !IP6ADDR_EQ(*dst_ip, target_addr) )
+	{
+		neighbor_cache_entry->is_router = 1;
+		
+		/* Add to redirect table.*/
+		//fnet_nd6_redirect_table_add(netif, destination_addr, target_addr);
+	}
+	
 DROP:
+	if(pkts){
+		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,(void*)&queue_addr);
+	}
 	netpkt_free(pkt);
 }
 
