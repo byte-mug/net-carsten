@@ -74,10 +74,6 @@ void netnd6_neighbor_solicitation_reveive(netif_t *nif,netpkt_t *pkt, ipv6_addr_
 	
 	target_addr = hdr->target_addr;
 	
-	/* Temporary level */
-	netpkt_levelup(pkt);
-	
-	
 	if( netpkt_pullfront(pkt,sizeof(fnet_nd6_ns_header_t)) ) goto DROP;
 	
 	while(NETPKT_LENGTH(pkt)){
@@ -302,9 +298,6 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
 	) goto DROP;
 	
 	target_addr = hdr->target_addr;
-	
-	/* Temporary level */
-	netpkt_levelup(pkt);
 	
 	if( netpkt_pullfront(pkt,sizeof(fnet_nd6_na_header_t)) ) goto DROP;
 	
