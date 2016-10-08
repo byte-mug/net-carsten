@@ -18,6 +18,7 @@
 
 #include <netnd6/table.h>
 #include <netstd/mem.h>
+#include <netipv6/defs.h>
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *src_ip){
 	netnd6_if_t                 *nd6_if;
@@ -112,7 +113,7 @@ fnet_nd6_prefix_entry_t*   netnd6_prefix_list_get(netif_t *nif, const ipv6_addr_
 fnet_nd6_prefix_entry_t*   netnd6_prefix_list_add(netif_t *nif, const ipv6_addr_t *prefix, uint32_t prefix_length, net_time_t lifetime){
 	netnd6_if_t                 *nd6_if;
 	int                         i;
-	fnet_nd6_prefix_entry_t   *entry = 0;
+	fnet_nd6_prefix_entry_t     *entry = 0;
 
 	nd6_if = nif->nd6;
 	
@@ -148,6 +149,54 @@ fnet_nd6_prefix_entry_t*   netnd6_prefix_list_add(netif_t *nif, const ipv6_addr_
 	entry->lifetime = lifetime;
 	entry->creation_time = net_timer_seconds();
 	entry->used = 1;
+	
+	return entry;
+}
+
+fnet_nd6_redirect_entry_t* netnd6_redirect_table_add(netif_t *nif, const ipv6_addr_t *destination_addr, const ipv6_addr_t *target_addr){
+	netnd6_if_t                 *nd6_if;
+	int                         i;
+	fnet_nd6_redirect_entry_t   *entry = 0;
+	
+	nd6_if = nif->nd6;
+	
+	if (! nd6_if) return 0;
+	
+	/* Check if the destination address exists.*/
+	for(i = 0u; i < FNET_ND6_REDIRECT_TABLE_SIZE; i++)
+	{
+		if(IP6ADDR_EQ(nd6_if->redirect_table[i].destination_addr, *destination_addr))
+		{
+			/* Found existing destination address.*/
+			entry = &nd6_if->redirect_table[i];
+			break;
+		}
+	}
+	
+	if(! entry ){
+		/* Find an unused entry in the table. */
+		for(i = 0u; i < FNET_ND6_REDIRECT_TABLE_SIZE; i++){
+			if(IP6_ADDR_IS_UNSPECIFIED(nd6_if->redirect_table[i].destination_addr))
+			{
+				entry = &nd6_if->redirect_table[i];
+				break;
+			}
+		}
+	}
+	
+	if(! entry ){
+		entry = &nd6_if->redirect_table[0];
+		/* Try to find the oldest entry. */
+		for(i = 1u; i < FNET_ND6_REDIRECT_TABLE_SIZE; i++){
+			if(nd6_if->redirect_table[i].creation_time < entry->creation_time)
+				entry = &nd6_if->redirect_table[i];
+		}
+	}
+	
+	/* Fill the informationn. */
+	entry->destination_addr = *destination_addr;
+	entry->target_addr      = *target_addr;
+        entry->creation_time    = net_timer_seconds();
 	
 	return entry;
 }

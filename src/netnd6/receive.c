@@ -1024,6 +1024,7 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 		if( netpkt_pullfront(pkt,size) ) goto DROP;
 	}
 	
+	net_mutex_lock(nif->nd6->nd6_lock);
 	/*
 	 * RFC4861: If the redirect contains a Target Link-Layer Address option, the host
 	 * either creates or updates the Neighbor Cache entry for the target.
@@ -1074,8 +1075,9 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 		neighbor_cache_entry->is_router = 1;
 		
 		/* Add to redirect table.*/
-		//fnet_nd6_redirect_table_add(netif, destination_addr, target_addr);
+		netnd6_redirect_table_add(nif,dst_ip,&target_addr);
 	}
+	net_mutex_unlock(nif->nd6->nd6_lock);
 	
 DROP:
 	if(pkts){
