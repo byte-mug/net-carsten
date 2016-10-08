@@ -933,7 +933,122 @@ static void netnd6_ra_prefix_option(netif_t *nif, fnet_nd6_option_prefix_header_
 }
 
 void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
-	//fnet_nd6_rd_header_t
+	fnet_nd6_rd_header_t           *hdr;
+	ipv6_addr_t                    target_addr;
+	fnet_nd6_option_header_t       *nd_option;
+	uint32_t                       size;
+	char                           nd_option_tlla;
+	mac_addr_t                     tlla_addr;
+	fnet_nd6_option_lla_header_t   *hdr_tlla;
+	fnet_nd6_neighbor_entry_t      *neighbor_cache_entry;
+	
+	/*
+	 * Validation RFC4861 (8.1.1).
+	 * The IP Hop Limit field has a value of 255, i.e., the packet
+	 * could not possibly have been forwarded by a router.
+	 */
+	if( netnd6_check_hop_limit(pkt,255) ) goto DROP;
+	
+	/*
+	 * The header must reside in contiguous area of memory.
+	 *
+	 * Validation RFC4861 (8.1.1). ICMP length (derived from the IP length) is 40 or more octets.
+	 */
+	if( netpkt_pullup(pkt,sizeof(fnet_nd6_rd_header_t)) ) goto DROP;
+	
+	hdr                 =  netpkt_data(pkt);
+	target_addr         =  hdr->target_addr;
+	
+	/* Validation RFC4861 (8.1.1). */
+	if(
+		/* ICMP Code is 0.*/
+		(hdr->icmp6_header.code != 0u) ||
+		
+		/* MUST be the link-local address.*/
+		(!IP6_ADDR_IS_LINKLOCAL(*src_ip))||
+		
+		/* The ICMP Destination Address field in the redirect message does
+		 * not contain a multicast address.*/
+		(!IP6_ADDR_IS_MULTICAST(*dst_ip))||
+		
+		/* The ICMP Target Address is either a link-local address (when
+		 * redirected to a router) or the same as the ICMP Destination
+		 * Address (when redirected to the on-link destination). */
+		((!IP6_ADDR_IS_LINKLOCAL(target_addr)) &&
+			(!IP6ADDR_EQ(*dst_ip, target_addr)))
+		
+		/* TODO: The IP source address of the Redirect is the same as the current
+		 * first-hop router for the specified ICMP Destination Address.*/
+	) goto DROP;
+	
+	if( netpkt_pullfront(pkt,sizeof(fnet_nd6_na_header_t)) ) goto DROP;
+	
+	/************************************************************
+	 * Handle posible options.
+	 ************************************************************
+	 * The contents of any defined options that are not specified
+	 * to be used with Redirect messages MUST be
+	 * ignored and the packet processed as normal. The only defined
+	 * options that may appear are the Target Link-Layer Address,
+	 * Prefix Information and MTU options.
+	 ************************************************************/
+	
+	nd_option_tlla = 0;
+	while(NETPKT_LENGTH(pkt)){
+		if( netpkt_pullup(pkt,sizeof(fnet_nd6_option_header_t)) ) goto DROP;
+		
+		nd_option = netpkt_data(pkt);
+		
+		/*
+		 * Validation RFC4861 (7.1.2). All included options have a length that
+		 * is greater than zero.
+		 */
+		if(nd_option->length == 0u) goto DROP;
+		
+		size = nd_option->length<<3;
+		
+		/*
+		 * Handle Source link-layer address option only.
+		 */
+		if( (nd_option->type == FNET_ND6_OPTION_SOURCE_LLA) && (size > sizeof(fnet_nd6_option_lla_header_t)) ) {
+			if( netpkt_pullup(pkt,size) ) goto DROP;
+			nd_option_tlla = 1;
+			hdr_tlla = netpkt_data(pkt);
+			tlla_addr = AS_MAC(hdr_tlla->addr);
+			//netnd6_nsol_handle_lla(nif,size,netpkt_data(pkt),src_ip);
+		}
+		/* else, silently ignore any options they do not recognize
+		 * and continue processing the message.
+		 */
+		if( netpkt_pullfront(pkt,size) ) goto DROP;
+	}
+	
+	/*
+	 * RFC4861: If the redirect contains a Target Link-Layer Address option, the host
+	 * either creates or updates the Neighbor Cache entry for the target.
+	 */
+	if(nd_option_tlla){
+		neighbor_cache_entry = netnd6_neighbor_cache_get(nif,&target_addr);
+		if(! neighbor_cache_entry )
+		{
+			/*  If a Neighbor Cache entry is
+			 * created for the target, its reachability state MUST be set to STALE
+			 * as specified in Section 7.3.3. */
+			neighbor_cache_entry = netnd6_neighbor_cache_add(nif,&target_addr, &tlla_addr, FNET_ND6_NEIGHBOR_STATE_STALE);
+		}
+		else
+		{
+			/* If a cache entry already existed and
+			 * it is updated with a different link-layer address, its reachability
+			 * state MUST also be set to STALE. */
+			if( !NETIF_MACADDR_EQ(tlla_addr, neighbor_cache_entry->ll_addr) )
+			{
+				neighbor_cache_entry->ll_addr = tlla_addr;
+				neighbor_cache_entry->state = FNET_ND6_NEIGHBOR_STATE_STALE;
+			}
+		}
+		
+	}
 DROP:
 	netpkt_free(pkt);
 }
