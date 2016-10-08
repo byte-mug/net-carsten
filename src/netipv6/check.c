@@ -20,6 +20,7 @@
 #include <netipv6/defs.h>
 #include <netipv6/if.h>
 #include <netpkt/flags.h>
+#include <netstd/mem.h>
 
 static const ipv6_addr_t   ip6_addr_any                      = IP6_ADDR_ANY_INIT;
 static const ipv6_addr_t   ip6_addr_loopback                 = IP6_ADDR_LOOPBACK_INIT;
@@ -114,3 +115,18 @@ struct netipv6_if_addr* netipv6_get_address_info(netif_t *nif, ipv6_addr_t *addr
 	}
 	return 0;
 }
+
+int netipv6_addr_pefix_cmp(const ipv6_addr_t *addr_1, const ipv6_addr_t *addr_2, size_t prefix_length)
+{
+	int     result;
+	size_t  prefix_length_bytes = prefix_length >> 3;
+	uint8_t prefix_bitmask = ( 0xff<<(prefix_length&7) )&0xff;
+	
+	return
+		(prefix_length <= 128u) &&
+		(memcmp(addr_1, addr_2, prefix_length_bytes) == 0) &&
+		((prefix_length_bytes<16)?(
+			(addr_1->addr[prefix_length_bytes] & prefix_bitmask) ==
+			(addr_2->addr[prefix_length_bytes] & prefix_bitmask) ):1 );
+}
+

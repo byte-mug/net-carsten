@@ -40,5 +40,7 @@ int netipv6_addr_is_own_ip6_solicited_multicast(netif_t *nif, ipv6_addr_t *addr)
  */
 struct netipv6_if_addr* netipv6_get_address_info(netif_t *nif, ipv6_addr_t *addr);
 
+int netipv6_addr_pefix_cmp(const ipv6_addr_t *addr_1, const ipv6_addr_t *addr_2, size_t prefix_length);
+
 #endif
 

@@ -47,6 +47,7 @@ file(GLOB NET_SRC
 	src/netnd6/*.c
 	src/netpkt/*.c
 	src/netprot/*.c
+	src/netstd/*.c
 	)
 
 add_executable(helloworld ${APP_SRC} ${API_SRC} ${NET_SRC})

@@ -89,3 +89,66 @@ fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add(netif_t *nif, ipv6_addr_t *
         /* TBD Init timers reachable; last send*/
 	return entry;
 }
+
+fnet_nd6_prefix_entry_t*   netnd6_prefix_list_get(netif_t *nif, const ipv6_addr_t *prefix){
+	netnd6_if_t                 *nd6_if;
+	int                         i;
+
+	nd6_if = nif->nd6;
+	
+	if (! nd6_if) return 0;
+	
+	/* Find the entry in the list. */
+	for(i = 0u; i < FNET_ND6_PREFIX_LIST_SIZE; i++)
+	{
+		if( (nd6_if->prefix_list[i].used) && IP6ADDR_EQ(nd6_if->prefix_list[i].prefix, *prefix))
+		{
+			return &nd6_if->prefix_list[i];
+		}
+	}
+	return 0;
+}
+
+fnet_nd6_prefix_entry_t*   netnd6_prefix_list_add(netif_t *nif, const ipv6_addr_t *prefix, uint32_t prefix_length, net_time_t lifetime){
+	netnd6_if_t                 *nd6_if;
+	int                         i;
+	fnet_nd6_prefix_entry_t   *entry = 0;
+
+	nd6_if = nif->nd6;
+	
+	if (! nd6_if) return 0;
+	
+	/* Find an unused entry in the cache. Skip 1st Link_locak prefix. */
+	for(i = 1u; i < FNET_ND6_PREFIX_LIST_SIZE; i++)
+	{
+		if(!nd6_if->prefix_list[i].used)
+		{
+			entry = &nd6_if->prefix_list[i];
+			break;
+		}
+	}
+	
+	/* If no free entry is found. */
+	if(! entry )
+	{
+		entry = &nd6_if->prefix_list[0];
+		/* Try to find the oldest entry. */
+		for(i = 1u; i < FNET_ND6_PREFIX_LIST_SIZE; i++)
+		{
+			if(nd6_if->prefix_list[i].creation_time < entry->creation_time)
+			{
+				entry = &nd6_if->prefix_list[i];
+			}
+		}
+	}
+	
+	/* Fill the informationn. */
+	entry->prefix = *prefix;
+	entry->prefix_length = prefix_length;
+	entry->lifetime = lifetime;
+	entry->creation_time = net_timer_seconds();
+	entry->used = 1;
+	
+	return entry;
+}
+

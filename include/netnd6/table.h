@@ -27,5 +27,9 @@ fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add(netif_t *nif, ipv6_addr_t *src_ip, mac_addr_t *ll_addr, fnet_nd6_neighbor_state_t state);
 
+fnet_nd6_prefix_entry_t*   netnd6_prefix_list_get(netif_t *nif, const ipv6_addr_t *prefix);
+
+fnet_nd6_prefix_entry_t*   netnd6_prefix_list_add(netif_t *nif, const ipv6_addr_t *prefix, uint32_t prefix_length, net_time_t lifetime);
+
 #endif
 

@@ -13,19 +13,14 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
+#include <netstd/time.h>
 
-#pragma once
-
-#include <netstd/stdint.h>
-
-/*
- * Time. Just Time.
- */
-typedef uint64_t net_time_t;
-
-#define net_timer_seconds() ((net_time_t)0)
-
-#define net_timer_ms() ((net_time_t)0)
-
-net_time_t net_timer_get_interval( net_time_t start, net_time_t end );
+net_time_t net_timer_get_interval( net_time_t start, net_time_t end ) {
+	/*
+	 * When start exceeds end, return 0.
+	 */
+	if(start>end) return 0;
+	
+	return end-start;
+}
 

@@ -547,6 +547,8 @@ static void fnet_nd6_router_list_add( fnet_nd6_neighbor_entry_t *neighbor_entry,
     }
 }
 
+static void netnd6_ra_prefix_option(netif_t *nif, fnet_nd6_option_prefix_header_t *nd_option_prefix);
+
 void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
 	fnet_nd6_ra_header_t       *hdr;
 	fnet_nd6_option_header_t   *nd_option;
@@ -648,7 +650,9 @@ void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t
 			break;
 		/* Prefix option */
 		case FNET_ND6_OPTION_PREFIX:
-			// TODO: prefix options.
+			if( size < sizeof(fnet_nd6_option_prefix_header_t) ) break;
+			if( netpkt_pullup(pkt,sizeof(fnet_nd6_option_prefix_header_t)) ) goto DROP;
+			netnd6_ra_prefix_option(nif,(fnet_nd6_option_prefix_header_t*)netpkt_data(pkt));
 			break;
 		/* RDNSS option */
 		case FNET_ND6_OPTION_RDNSS:
@@ -774,7 +778,155 @@ DROP:
 	netpkt_free(pkt);
 }
 
-
+static void netnd6_ra_prefix_option(netif_t *nif, fnet_nd6_option_prefix_header_t *nd_option_prefix){
+	fnet_nd6_prefix_entry_t  *prefix_entry;
+	netipv6_if_addr_t        *addr_info;
+	int                      j;
+	netipv6_if_t             *ipv6;
+	
+	ipv6 = nif->ipv6;
+	
+	if(
+		/* RFC4861: A router SHOULD NOT send a prefix
+		 * option for the link-local prefix and a host SHOULD
+		 * ignore such a prefix option.*/
+		(IP6_ADDR_IS_LINKLOCAL(nd_option_prefix->prefix)) &&
+		/* RFC4861: The value of Prefered Lifetime field MUST NOT exceed
+		 * the Valid Lifetime field to avoid preferring
+		 * addresses that are no longer valid.*/
+		(ntoh32(nd_option_prefix->prefered_lifetime) > ntoh32(nd_option_prefix->valid_lifetime))
+	) return;
+	
+	net_mutex_lock(nif->nd6->nd6_lock);
+	/*************************************************************
+	 * Prefix Information option with the on-link flag set.
+	 *************************************************************/
+	if( (nd_option_prefix->flag & FNET_ND6_OPTION_FLAG_L) == FNET_ND6_OPTION_FLAG_L )
+	{
+		prefix_entry = netnd6_prefix_list_get(nif, &(nd_option_prefix->prefix));
+		
+		/*
+		 * RFC4861: If the prefix is not already present in the Prefix List, and the
+		 * Prefix Information option's Valid Lifetime field is non-zero,
+		 * create a new entry for the prefix and initialize its
+		 * invalidation timer to the Valid Lifetime value in the Prefix
+		 * Information option.
+		 */
+		if(! prefix_entry )
+		{
+			if(nd_option_prefix->valid_lifetime != 0u)
+			{
+				/* Create a new entry for the prefix.*/
+				prefix_entry = netnd6_prefix_list_add(nif, &(nd_option_prefix->prefix), (uint32_t)nd_option_prefix->prefix_length, (net_time_t) ntoh32(nd_option_prefix->valid_lifetime));
+			}
+			else
+			{
+				/*
+				 * RFC4861: If the prefix is already present in the host's Prefix List as
+				 * the result of a previously received advertisement, reset its
+				 * invalidation timer to the Valid Lifetime value in the Prefix
+				 * Information option. If the new Lifetime value is zero, time-out
+				 * the prefix immediately.
+				 */
+				if(nd_option_prefix->valid_lifetime != 0u)
+				{
+					/* Reset Timer. */
+					prefix_entry->lifetime = ntoh32(nd_option_prefix->valid_lifetime);
+					prefix_entry->creation_time = net_timer_seconds();
+				}
+				else
+				{
+					/* Time-out the prefix immediately. */
+					prefix_entry->used = 0;
+				}
+			}
+		}
+	}
+	net_mutex_unlock(nif->nd6->nd6_lock);
+	
+	/*************************************************************
+	 * Stateless Address Autoconfiguration.
+	 *************************************************************/
+	
+	/* For each Prefix-Information option in the Router Advertisement:*/
+	if( ((nd_option_prefix->flag & FNET_ND6_OPTION_FLAG_A) == FNET_ND6_OPTION_FLAG_A )
+		&& (nd_option_prefix->valid_lifetime != 0u)
+	) {
+		addr_info = 0;
+		
+		/*
+		 * RFC4862 5.5.3:If the advertised prefix is equal to the prefix of an address
+		 * configured by stateless autoconfiguration in the list, the
+		 * preferred lifetime of the address is reset to the Preferred
+		 * Lifetime in the received advertisement.
+		 */
+		
+		/* Lookup the address */
+		for(j = 0u; j < NETIPV6_IF_ADDR_MAX; j++)
+		{
+			if(
+				ipv6->addrs[j].used &&
+				(ipv6->addrs[j].type == FNET_NETIF_IP_ADDR_TYPE_AUTOCONFIGURABLE) &&
+				netipv6_addr_pefix_cmp(&(nd_option_prefix->prefix),&(ipv6->addrs[j].address),(size_t)nd_option_prefix->prefix_length )
+			) {
+				addr_info = &(ipv6->addrs[j]);
+				break;
+			}
+		}
+		
+		if( addr_info )
+		{
+			/*
+			 * RFC4862 5.5.3: The specific action to
+			 * perform for the valid lifetime of the address depends on the Valid
+			 * Lifetime in the received advertisement and the remaining time to
+			 * the valid lifetime expiration of the previously autoconfigured
+			 * address. We call the remaining time "RemainingLifetime" in the
+			 * following discussion:
+			 */
+			if( (ntoh32(nd_option_prefix->valid_lifetime) > (60u * 60u * 2u) /* 2 hours */)
+				|| ( ntoh32(nd_option_prefix->valid_lifetime /*sec*/) >  net_timer_get_interval(net_timer_seconds(), (addr_info->creation_time + addr_info->lifetime /*sec*/)) )
+			)
+			{
+				/*
+				 * 1. If the received Valid Lifetime is greater than 2 hours or
+				 *    greater than RemainingLifetime, set the valid lifetime of the
+				 *    corresponding address to the advertised Valid Lifetime. */
+				addr_info->lifetime = ntoh32(nd_option_prefix->valid_lifetime);
+			}
+			else
+			{
+				/*
+				 * 2. If RemainingLifetime is less than or equal to 2 hours, ignore
+				 *    the Prefix Information option with regards to the valid
+				 *    lifetime, unless the Router Advertisement from which this
+				 *    option was obtained has been authenticated (e.g., via Secure
+				 *    Neighbor Discovery [RFC3971]). If the Router Advertisement
+				 *    was authenticated, the valid lifetime of the corresponding
+				 *    address should be set to the Valid Lifetime in the received
+				 *    option.
+				 * 3. Otherwise, reset the valid lifetime of the corresponding
+				 *    address to 2 hours.
+				 */
+				addr_info->lifetime = (60u * 60u * 2u) /* 2 hours */;
+			}
+			addr_info->creation_time = net_timer_seconds();
+		}
+		else
+		{
+			/* RFC4862 5.5.3: If the prefix advertised is not equal to the prefix of an
+			 * address configured by stateless autoconfiguration already in the
+			 * list of addresses associated with the interface (where "equal"
+			 * means the two prefix lengths are the same and the first prefixlength
+			 * bits of the prefixes are identical), and if the Valid
+			 * Lifetime is not 0, form an address (and add it to the list) by
+			 * combining the advertised prefix with an interface identifier. */
+			//fnet_netif_bind_ip6_addr_prv (nif, &nd_option_prefix->prefix, FNET_NETIF_IP_ADDR_TYPE_AUTOCONFIGURABLE,
+			//	fnet_ntohl(nd_option_prefix->valid_lifetime), (fnet_size_t)nd_option_prefix->prefix_length);
+		}
+	}
+	/* else. RFC4862: If the Autonomous flag is not set, silently ignore the Prefix Information option.*/
+}
 
 void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
 	netpkt_free(pkt);

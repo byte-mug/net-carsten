@@ -49,6 +49,17 @@ typedef enum
                                                  */
 } fnet_netif_ip6_addr_state_t;
 
+/**************************************************************************/ /*!
+ * @brief Possible IPv6 address types.
+ * @see fnet_netif_get_ip6_addr(), fnet_netif_ip6_addr_info
+ ******************************************************************************/
+typedef enum
+{
+    FNET_NETIF_IP_ADDR_TYPE_MANUAL = 0,            /**< @brief The address is set manually.*/
+    FNET_NETIF_IP_ADDR_TYPE_AUTOCONFIGURABLE = 1,  /**< @brief The address is set using "Auto-IP" link-local autoconfiguration. */
+    FNET_NETIF_IP_ADDR_TYPE_DHCP = 2               /**< @brief The address is set using DHCP. */
+} fnet_netif_ip_addr_type_t;
+
 typedef struct netipv6_if_addr
 {
 	ipv6_addr_t   address;                   /* IPv6 address.*/
@@ -64,6 +75,7 @@ typedef struct netipv6_if_addr
 	                                          * of NS transmits till DAD is finished.*/
 	net_time_t    state_time;                /* Time of last state event.*/
 	unsigned      state : 2;                 /* Address current state. (fnet_netif_ip6_addr_state_t)*/
+	unsigned      type  : 2;                 /* How the address was acquired. */
 	unsigned      used : 1;                  /* Is the entry in use? */
 
 } netipv6_if_addr_t;
