@@ -24,6 +24,7 @@
 #include <netnd6/table.h>
 
 #include <netipv6/defs.h>
+#include <netipv6/ctrl.h>
 #include <netipv6/check.h>
 #include <netipv6/if.h>
 
@@ -37,6 +38,8 @@
 /* TODO: move this elsewhere. */
 #define FNET_IP6_DEFAULT_MTU     1280u   /* Minimum IPv6 datagram size which    
                                           * must be supported by all IPv6 hosts */
+
+
 
 static void netnd6_nsol_handle_lla(
 	netif_t *nif,
@@ -564,12 +567,6 @@ void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t
 	ipv6_addr_t                queue_addr;
 	netpkt_t                   *pkts;  /* Send-Chain. */
 	
-	/* Validation RFC4861 (7.1.2). */
-	if(
-		(hdr->icmp6_header.code != 0u) ||                 /* ICMP Code is 0.*/
-		(!IP6_ADDR_IS_LINKLOCAL(*src_ip))                 /* MUST be the link-local address.*/
-	) goto DROP;
-	
 	/*
 	 * Validation RFC4861 (6.1.2).
 	 * The IP Hop Limit field has a value of 255, i.e., the packet
@@ -590,6 +587,11 @@ void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t
 	pkt_retrans_timer   =  hdr->retrans_timer;
 	pkt_router_lifetime =  hdr->router_lifetime;
 	
+	/* Validation RFC4861 (6.1.2). */
+	if(
+		(hdr->icmp6_header.code != 0u) ||                 /* ICMP Code is 0.*/
+		(!IP6_ADDR_IS_LINKLOCAL(*src_ip))                 /* MUST be the link-local address.*/
+	) goto DROP;
 	
 	if( netpkt_pullfront(pkt,sizeof(fnet_nd6_ns_header_t)) ) goto DROP;
 	
@@ -914,21 +916,25 @@ static void netnd6_ra_prefix_option(netif_t *nif, fnet_nd6_option_prefix_header_
 		}
 		else
 		{
-			/* RFC4862 5.5.3: If the prefix advertised is not equal to the prefix of an
+			/*
+			 * RFC4862 5.5.3: If the prefix advertised is not equal to the prefix of an
 			 * address configured by stateless autoconfiguration already in the
 			 * list of addresses associated with the interface (where "equal"
 			 * means the two prefix lengths are the same and the first prefixlength
 			 * bits of the prefixes are identical), and if the Valid
 			 * Lifetime is not 0, form an address (and add it to the list) by
-			 * combining the advertised prefix with an interface identifier. */
-			//fnet_netif_bind_ip6_addr_prv (nif, &nd_option_prefix->prefix, FNET_NETIF_IP_ADDR_TYPE_AUTOCONFIGURABLE,
-			//	fnet_ntohl(nd_option_prefix->valid_lifetime), (fnet_size_t)nd_option_prefix->prefix_length);
+			 * combining the advertised prefix with an interface identifier.
+			 */
+			netipv6_bind_addr_prv(nif,&(nd_option_prefix->prefix), FNET_NETIF_IP_ADDR_TYPE_AUTOCONFIGURABLE,
+				ntoh32(nd_option_prefix->valid_lifetime),(size_t)nd_option_prefix->prefix_length);
 		}
 	}
 	/* else. RFC4862: If the Autonomous flag is not set, silently ignore the Prefix Information option.*/
 }
 
 void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
+	//fnet_nd6_rd_header_t
+DROP:
 	netpkt_free(pkt);
 }
 
