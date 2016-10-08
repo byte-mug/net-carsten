@@ -272,6 +272,7 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
 	char                       is_ll_addr_changed;
 	char                       nd_option_tlla;
 	fnet_nd6_option_lla_header_t *hdr_tlla;
+	netpkt_t                   *pkts    = 0; /* Send-Chain. */
 	
 	/*
 	 * Validation RFC4861 (7.1.2).
@@ -415,7 +416,8 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
 			/* - It sends any packets queued for the neighbor awaiting address
 			 *   resolution.
 			 */
-			//fnet_nd6_neighbor_send_waiting_netbuf(netif, neighbor_cache_entry);
+			pkts = neighbor_cache_entry->waiting_pkts;
+			neighbor_cache_entry->waiting_pkts = 0;
 		}
 		else
 		{
@@ -496,7 +498,9 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
 				 */
 				if((neighbor_cache_entry->is_router) && (!is_router))
 				{
-					//fnet_nd6_router_list_del(neighbor_cache_entry);
+					/* Delete Cache entry. */
+					neighbor_cache_entry->state = FNET_ND6_NEIGHBOR_STATE_NOTUSED;
+					neighbor_cache_entry->router_lifetime = 0u;
 				}
 			}
 		}
@@ -505,6 +509,9 @@ DROP_L:
 	}
 	
 DROP:
+	if(pkts) {
+		nif->netif_class->ifapi_send_l2_all(nif,pkts,&tlla_addr);
+	}
 	netpkt_free(pkt);
 }
 
