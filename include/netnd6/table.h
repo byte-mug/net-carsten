@@ -14,11 +14,18 @@
  *   limitations under the License.
  */
 
-#pragma once
 
-/*
- * For memcpy.
- */
-#include <string.h>
+#ifndef _NETND6_TABLE_H_
+#define _NETND6_TABLE_H_
 
-#define net_bzero(ptr,len) memset((ptr),0,(len))
+#include <netif/if.h>
+#include <netnd6/if.h>
+#include <netipv6/ipv6.h>
+#include <netif/mac.h>
+
+fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *src_ip);
+
+fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add(netif_t *nif, ipv6_addr_t *src_ip, mac_addr_t *ll_addr, fnet_nd6_neighbor_state_t state);
+
+#endif
+

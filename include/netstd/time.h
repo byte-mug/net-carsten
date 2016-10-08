@@ -16,9 +16,14 @@
 
 #pragma once
 
-/*
- * For memcpy.
- */
-#include <string.h>
+#include <netstd/stdint.h>
 
-#define net_bzero(ptr,len) memset((ptr),0,(len))
+/*
+ * Time. Just Time.
+ */
+typedef uint64_t net_time_t;
+
+#define net_timer_seconds() ((net_time_t)0)
+
+#define net_timer_ms() ((net_time_t)0)
+

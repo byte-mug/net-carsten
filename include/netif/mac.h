@@ -24,6 +24,13 @@ typedef struct mac_addr{
 	uint8_t mac[6];
 } mac_addr_t;
 
+#define NETIF_MACADDR_EQ(a,b) (\
+	((a).mac[0] == (b).mac[0])&&\
+	((a).mac[1] == (b).mac[1])&&\
+	((a).mac[2] == (b).mac[2])&&\
+	((a).mac[3] == (b).mac[3])&&\
+	((a).mac[4] == (b).mac[4])&&\
+	((a).mac[5] == (b).mac[5])   )
 
 #endif
 

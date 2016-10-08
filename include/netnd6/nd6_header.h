@@ -24,30 +24,6 @@
 #include <neticmp6/icmp6_header.h>
 #include <netipv6/ipv6.h>
 
-/**************************************************************
-* Neighbor's reachability states, based on RFC4861.
-**************************************************************/
-typedef enum fnet_nd6_neighbor_state
-{
-    FNET_ND6_NEIGHBOR_STATE_NOTUSED = 0,    /* The entry is not used - free.*/
-    FNET_ND6_NEIGHBOR_STATE_INCOMPLETE = 1, /* Address resolution is in progress and the link-layer
-                                             * address of the neighbor has not yet been determined.*/
-    FNET_ND6_NEIGHBOR_STATE_REACHABLE = 2,  /* Roughly speaking, the neighbor is known to have been
-                                             * reachable recently (within tens of seconds ago).*/
-    FNET_ND6_NEIGHBOR_STATE_STALE = 3,      /* The neighbor is no longer known to be reachable but
-                                             * until traffic is sent to the neighbor, no attempt
-                                             * should be made to verify its reachability.*/
-    FNET_ND6_NEIGHBOR_STATE_DELAY = 4,      /* The neighbor is no longer known to be reachable, and
-                                             * traffic has recently been sent to the neighbor.
-                                             * Rather than probe the neighbor immediately, however,
-                                             * delay sending probes for a short while in order to
-                                             * give upper-layer protocols a chance to provide
-                                             * reachability confirmation.*/
-    FNET_ND6_NEIGHBOR_STATE_PROBE = 5       /* The neighbor is no longer known to be reachable, and
-                                             * unicast Neighbor Solicitation probes are being sent to
-                                             * verify reachability.*/
-} fnet_nd6_neighbor_state_t;
-
 /*********************************************************************
 * Partial IP packet header for Argument validation.
 **********************************************************************

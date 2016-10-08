@@ -22,6 +22,7 @@
 #define _NETIPV6_IF_H_
 
 #include <netipv6/ipv6.h>
+#include <netstd/time.h>
 
 #define NETIPV6_IF_ADDR_MAX 8
 
@@ -52,20 +53,18 @@ typedef struct netipv6_if_addr
 {
 	ipv6_addr_t   address;                   /* IPv6 address.*/
 	ipv6_addr_t   solicited_multicast_addr;  /* Solicited-node multicast */
+
+	net_time_t    creation_time;             /* Time of entry creation (in seconds).*/
+	net_time_t    lifetime;                  /* Address lifetime (in seconds). 0xFFFFFFFF = Infinite Lifetime
+	                                          * RFC4862. A link-local address has an infinite preferred and valid lifetime; it
+	                                          * is never timed out.*/
+	size_t        prefix_length;             /* Prefix length (in bits). The number of leading bits
+	                                          * in the Prefix that are valid. */
+	uint32_t      dad_transmit_counter;      /* Counter used by DAD. Equals to the number
+	                                          * of NS transmits till DAD is finished.*/
+	net_time_t    state_time;                /* Time of last state event.*/
 	unsigned      state : 2;                 /* Address current state. (fnet_netif_ip6_addr_state_t)*/
 	unsigned      used : 1;                  /* Is the entry in use? */
-
-#if 0
-    fnet_time_t                 creation_time;          /* Time of entry creation (in seconds).*/
-    fnet_time_t                 lifetime;               /* Address lifetime (in seconds). 0xFFFFFFFF = Infinite Lifetime
-                                                         * RFC4862. A link-local address has an infinite preferred and valid lifetime; it
-                                                         * is never timed out.*/
-    fnet_size_t                 prefix_length;          /* Prefix length (in bits). The number of leading bits
-                                                         * in the Prefix that are valid. */
-    fnet_index_t                dad_transmit_counter;   /* Counter used by DAD. Equals to the number
-                                                         * of NS transmits till DAD is finished.*/
-    fnet_time_t                 state_time;             /* Time of last state event.*/
-#endif
 
 } netipv6_if_addr_t;
 

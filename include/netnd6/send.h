@@ -14,11 +14,17 @@
  *   limitations under the License.
  */
 
-#pragma once
 
-/*
- * For memcpy.
- */
-#include <string.h>
+#ifndef _NETND6_SEND_H_
+#define _NETND6_SEND_H_
 
-#define net_bzero(ptr,len) memset((ptr),0,(len))
+#include <netif/if.h>
+#include <netpkt/pkt.h>
+#include <netipv6/ipv6.h>
+
+#include <netif/mac.h>
+
+void netnd6_neighbor_advertisement_send(netif_t *nif, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip, uint8_t na_flags);
+
+#endif
+
