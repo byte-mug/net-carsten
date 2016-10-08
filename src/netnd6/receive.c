@@ -30,7 +30,13 @@
 #include <netif/mac.h>
 #include <netif/ifapi.h>
 
+#include <netstd/endianness.h>
+
 #define AS_MAC(a) *((mac_addr_t*)(a))
+
+/* TODO: move this elsewhere. */
+#define FNET_IP6_DEFAULT_MTU     1280u   /* Minimum IPv6 datagram size which    
+                                          * must be supported by all IPv6 hosts */
 
 static void netnd6_nsol_handle_lla(
 	netif_t *nif,
@@ -173,6 +179,7 @@ static void netnd6_nsol_handle_lla(
 	fnet_nd6_neighbor_entry_t  *neighbor_cache_entry;
 	netpkt_t                   *pkts    = 0; /* Send-Chain. */
 	mac_addr_t                 mac_addr = AS_MAC(nd_option_slla->addr);
+	ipv6_addr_t                queue_addr;
 	
 	/*
 	 * Validation RFC4861 (7.1.1): If the IP source address is the
@@ -246,11 +253,13 @@ static void netnd6_nsol_handle_lla(
 		 */
 		pkts = neighbor_cache_entry->waiting_pkts;
 		neighbor_cache_entry->waiting_pkts = 0;
+		queue_addr = neighbor_cache_entry->ip_addr;
 	}
 	net_mutex_unlock(nif->nd6->nd6_lock);
 	
 	if(pkts) {
-		nif->netif_class->ifapi_send_l2_all(nif,pkts,&mac_addr);
+		//nif->netif_class->ifapi_send_l2_all(nif,pkts,&mac_addr);
+		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,(void*)&queue_addr);
 	}
 }
 
@@ -269,6 +278,7 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
 	char                       nd_option_tlla;
 	fnet_nd6_option_lla_header_t *hdr_tlla;
 	netpkt_t                   *pkts    = 0; /* Send-Chain. */
+	ipv6_addr_t                queue_addr;
 	
 	/*
 	 * Validation RFC4861 (7.1.2).
@@ -298,6 +308,10 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
 	) goto DROP;
 	
 	target_addr = hdr->target_addr;
+	
+	/* Extract flag values.*/
+        is_router = (hdr->flag & FNET_ND6_NA_FLAG_ROUTER) ? 1:0;
+        is_override = (hdr->flag & FNET_ND6_NA_FLAG_OVERRIDE) ? 1:0;
 	
 	if( netpkt_pullfront(pkt,sizeof(fnet_nd6_na_header_t)) ) goto DROP;
 	
@@ -351,9 +365,7 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
          * "valid advertisement".
          */
 
-        /* Extract flag values.*/
-        is_router = (hdr->flag & FNET_ND6_NA_FLAG_ROUTER) ? 1:0;
-        is_override = (hdr->flag & FNET_ND6_NA_FLAG_OVERRIDE) ? 1:0;
+        
 	
 	/************************************************************
 	 * Handle NA message.
@@ -411,6 +423,7 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
 			 */
 			pkts = neighbor_cache_entry->waiting_pkts;
 			neighbor_cache_entry->waiting_pkts = 0;
+			queue_addr = neighbor_cache_entry->ip_addr;
 		}
 		else
 		{
@@ -503,14 +516,265 @@ DROP_L:
 	
 DROP:
 	if(pkts) {
-		nif->netif_class->ifapi_send_l2_all(nif,pkts,&tlla_addr);
+		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,(void*)&queue_addr);
 	}
 	netpkt_free(pkt);
 }
 
+/************************************************************************
+* DESCRIPTION: Adds entry into the Router List.
+*************************************************************************/
+static void fnet_nd6_router_list_add( fnet_nd6_neighbor_entry_t *neighbor_entry, net_time_t lifetime )
+{
+    if (neighbor_entry)
+    {
+        if(lifetime)
+        {
+            neighbor_entry->is_router = 1;
+            neighbor_entry->router_lifetime = lifetime;
+            neighbor_entry->creation_time = net_timer_seconds();
+        }
+        else
+            /*
+	     * If the address is already present in the host's Default Router
+             * List and the received Router Lifetime value is zero, immediately
+             * time-out the entry.
+             */
+        {
+            neighbor_entry->state = FNET_ND6_NEIGHBOR_STATE_NOTUSED;
+            neighbor_entry->router_lifetime = 0u;
+        }
+    }
+}
+
 void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
+	fnet_nd6_ra_header_t       *hdr;
+	fnet_nd6_option_header_t   *nd_option;
+	uint32_t                   size;
+	//ipv6_addr_t                target_addr;
+	mac_addr_t                 slla_addr;
+	size_t                     mtu;
+	char                       is_option_slla = 0;
+	char                       is_option_mtu = 0;
+	uint8_t                    pkt_cur_hop_limit;
+	uint32_t                   pkt_reachable_time, pkt_retrans_timer, pkt_router_lifetime;
+	fnet_nd6_neighbor_entry_t  *neighbor_cache_entry;
+	ipv6_addr_t                queue_addr;
+	netpkt_t                   *pkts;  /* Send-Chain. */
+	
+	/* Validation RFC4861 (7.1.2). */
+	if(
+		(hdr->icmp6_header.code != 0u) ||                 /* ICMP Code is 0.*/
+		(!IP6_ADDR_IS_LINKLOCAL(*src_ip))                 /* MUST be the link-local address.*/
+	) goto DROP;
+	
+	/*
+	 * Validation RFC4861 (6.1.2).
+	 * The IP Hop Limit field has a value of 255, i.e., the packet
+	 * could not possibly have been forwarded by a router.
+	 */
+	if( netnd6_check_hop_limit(pkt,255) ) goto DROP;
+	
+	/*
+	 * The header must reside in contiguous area of memory.
+	 *
+	 * Validation RFC4861 (6.1.2). ICMP length (derived from the IP length) is 16 or more octets.
+	 */
+	if( netpkt_pullup(pkt,sizeof(fnet_nd6_ns_header_t)) ) goto DROP;
+	
+	hdr                 =  netpkt_data(pkt);
+	pkt_cur_hop_limit   =  hdr->cur_hop_limit;
+	pkt_reachable_time  =  hdr->reachable_time;
+	pkt_retrans_timer   =  hdr->retrans_timer;
+	pkt_router_lifetime =  hdr->router_lifetime;
+	
+	
+	if( netpkt_pullfront(pkt,sizeof(fnet_nd6_ns_header_t)) ) goto DROP;
+	
+	
+	/* Level up to remember current position. */
+	netpkt_levelup(pkt);
+	
+	/*
+	 * Validation RFC4861 (6.1.2). All included options have a length that
+	 * is greater than zero.
+	 */
+	while(NETPKT_LENGTH(pkt)){
+		if( netpkt_pullup(pkt,sizeof(fnet_nd6_option_header_t)) ) goto DROP;
+		
+		nd_option = netpkt_data(pkt);
+		
+		/* Drop packet, if option invalid. */
+		if(nd_option->length == 0u) goto DROP;
+		
+		if( netpkt_pullfront(pkt,(uint32_t)nd_option->length << 3) ) goto DROP;
+	}
+	
+	/* Revert level and rewind position. */
+	netpkt_switchlevel(pkt,-1);
+	
+	/* Packet is now valid! */
+	
+	/************************************************************
+	 * Handle posible options.
+	 ************************************************************
+	 * The contents of any defined options that are not specified
+	 * to be used with Router Advertisement messages MUST be
+	 * ignored and the packet processed as normal. The only defined
+	 * options that may appear are the Source Link-Layer Address,
+	 * Prefix Information and MTU options.
+	 ************************************************************/
+	while(NETPKT_LENGTH(pkt)){
+		if( netpkt_pullup(pkt,sizeof(fnet_nd6_option_header_t)) ) goto DROP;
+		
+		nd_option = netpkt_data(pkt);
+		
+		size = (uint32_t)nd_option->length << 3;
+		
+		switch(nd_option->type){
+		/* Source Link-Layer Address option.*/
+		case FNET_ND6_OPTION_SOURCE_LLA:
+			if( size < sizeof(fnet_nd6_option_header_t) + sizeof(mac_addr_t)) break;
+			if( netpkt_pullup(pkt,sizeof(fnet_nd6_option_header_t) + sizeof(mac_addr_t) ) ) goto DROP;
+			is_option_slla = 1;
+			slla_addr = AS_MAC( ((fnet_nd6_option_lla_header_t*)netpkt_data(pkt))->addr );
+			break;
+		/* MTU option */
+		case FNET_ND6_OPTION_MTU:
+			if( size < sizeof(fnet_nd6_option_mtu_header_t) ) break;
+			if( netpkt_pullup(pkt,sizeof(fnet_nd6_option_mtu_header_t)) ) goto DROP;
+			is_option_mtu = 1;
+			mtu = ntoh32( ((fnet_nd6_option_mtu_header_t*)netpkt_data(pkt))->mtu );
+			break;
+		/* Prefix option */
+		case FNET_ND6_OPTION_PREFIX:
+			// TODO: prefix options.
+			break;
+		/* RDNSS option */
+		case FNET_ND6_OPTION_RDNSS:
+			if( size < sizeof(fnet_nd6_option_rdnss_header_t) ) break;
+			
+			break;
+		/*
+		 * else, silently ignore any options they do not recognize
+                 * and continue processing the message.
+		 */
+		}
+		if( netpkt_pullfront(pkt,size) ) goto DROP;
+	}
+	
+	/************************************************************
+	 * Set parameters.
+	 ************************************************************/
+	
+	/*
+	 * RFC4861 6.3.4: If the received Cur Hop Limit value is non-zero, the host SHOULD set
+	 * its CurHopLimit variable to the received value.
+	 */
+	if(pkt_cur_hop_limit != 0u)
+	{
+		nif->nd6->cur_hop_limit = pkt_cur_hop_limit;
+	}
+	
+	/*
+	 * RFC4861 6.3.4: If the received Reachable Time value is non-zero, the host SHOULD set
+	 * its BaseReachableTime variable to the received value.
+	 */
+	if(pkt_reachable_time != 0u)
+	{
+		nif->nd6->reachable_time = ntoh32(pkt_reachable_time);
+	}
+	
+	/*
+	 * RFC4861 6.3.4:The RetransTimer variable SHOULD be copied from the Retrans Timer
+	 * field, if the received value is non-zero.
+	 */
+	if(pkt_retrans_timer != 0u)
+	{
+		nif->nd6->retrans_timer = ntoh32(pkt_retrans_timer);
+	}
+	
+	/*
+	 * RFC4861: Hosts SHOULD copy the option's value
+	 * into LinkMTU so long as the value is greater than or equal to the
+	 * minimum link MTU [IPv6] and does not exceed the maximum LinkMTU value
+	 * specified in the link-type-specific document.
+	 */
+	if(is_option_mtu)
+	{
+		if(mtu < nif->nd6->mtu)
+		{
+			if(mtu < FNET_IP6_DEFAULT_MTU)
+			{
+				mtu = FNET_IP6_DEFAULT_MTU;
+			}
+			nif->nd6->mtu =  mtu;
+			if(nif->ipv6->pmtu > mtu) nif->ipv6->pmtu = mtu;
+		}
+	}
+	
+	net_mutex_lock(nif->nd6->nd6_lock);
+	/*
+	 * RFC4861: If the advertisement contains a Source Link-Layer Address
+	 * option, the link-layer address SHOULD be recorded in the Neighbor
+	 * Cache entry for the router (creating an entry if necessary) and the
+	 * IsRouter flag in the Neighbor Cache entry MUST be set to TRUE.
+	 */
+	 neighbor_cache_entry = netnd6_neighbor_cache_get(nif, src_ip);
+	 if(is_option_slla)
+	 {
+		if(! neighbor_cache_entry )
+		/* Creating an entry if necessary */
+		{
+			neighbor_cache_entry = netnd6_neighbor_cache_add(nif,src_ip, &slla_addr, FNET_ND6_NEIGHBOR_STATE_STALE);
+		}
+		else
+		{
+			/* If a cache entry already exists and is
+			 * updated with a different link-layer address, the reachability state
+			 * MUST also be set to STALE.*/
+			if( ! NETIF_MACADDR_EQ(slla_addr, neighbor_cache_entry->ll_addr) )
+			{
+				neighbor_cache_entry->ll_addr = slla_addr;
+				neighbor_cache_entry->state = FNET_ND6_NEIGHBOR_STATE_STALE;
+			}
+		}
+		
+		/*
+		 * Sends any packets queued for the neighbor awaiting address resolution.
+		 */
+		pkts = neighbor_cache_entry->waiting_pkts;
+		neighbor_cache_entry->waiting_pkts = 0;
+		queue_addr = neighbor_cache_entry->ip_addr;
+        }
+        else
+        {
+            if(! neighbor_cache_entry )
+            {
+		neighbor_cache_entry = netnd6_neighbor_cache_add(nif,src_ip, /*NULLPTR*/0, FNET_ND6_NEIGHBOR_STATE_STALE);
+            }
+        }
+	/*
+         * RFC4861: If the address is already present in the host's Default Router
+         * List as a result of a previously received advertisement, reset
+         * its invalidation timer to the Router Lifetime value in the newly
+         * received advertisement.
+         * If the address is already present in the host's Default Router
+         * List and the received Router Lifetime value is zero, immediately
+         * time-out the entry.
+         */
+        fnet_nd6_router_list_add( neighbor_cache_entry, (net_time_t)ntoh32(pkt_router_lifetime));
+	
+	net_mutex_unlock(nif->nd6->nd6_lock);
+	
+DROP:
+	if(pkts){
+		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,(void*)&queue_addr);
+	}
 	netpkt_free(pkt);
 }
+
+
 
 void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
 	netpkt_free(pkt);

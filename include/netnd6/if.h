@@ -269,13 +269,29 @@ typedef struct netnd6_if {
 	* RFC4861 5.1: A list of the prefixes that define a set of
 	* addresses that are on-link.
 	**************************************************************/
-	fnet_nd6_prefix_entry_t     prefix_list[FNET_ND6_PREFIX_LIST_SIZE];
+	fnet_nd6_prefix_entry_t    prefix_list[FNET_ND6_PREFIX_LIST_SIZE];
 
 	/* Redirect Table. Used only when target address != destination address. */
-	fnet_nd6_redirect_entry_t   redirect_table[FNET_ND6_REDIRECT_TABLE_SIZE];
+	fnet_nd6_redirect_entry_t  redirect_table[FNET_ND6_REDIRECT_TABLE_SIZE];
 
-	fnet_nd6_rdnss_entry_t      rdnss_list[FNET_ND6_RDNSS_LIST_SIZE];
+	fnet_nd6_rdnss_entry_t     rdnss_list[FNET_ND6_RDNSS_LIST_SIZE];
 	
+	/* Interface variables */
+	size_t                     mtu;                     /* The recommended MTU for the link.
+	                                                     * Updated by RA messages.*/
+	uint8_t                    cur_hop_limit;           /* The default value that
+	                                                     * should be placed in the Hop Count field of the IP
+	                                                     * header for outgoing IP packets.*/
+	net_time_t                 reachable_time;          /* The time, in milliseconds,
+	                                                     * that a node assumes a neighbor is
+	                                                     * reachable after having received a reachability
+	                                                     * confirmation. Used by the Neighbor Unreachability
+	                                                     * Detection algorithm.*/
+	net_time_t                 retrans_timer;           /* The time, in milliseconds,
+	                                                     * between retransmitted Neighbor
+	                                                     * Solicitation messages. Used by address resolution
+	                                                     * and the Neighbor Unreachability Detection algorithm
+	                                                     * (see Sections 7.2 and 7.3).*/
 } netnd6_if_t;
 
 #endif

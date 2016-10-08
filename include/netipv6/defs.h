@@ -66,5 +66,8 @@
       (((a).addr32[2]) == 0U) &&	\
       (((a).addr32[3]) == 0U)))
 
+#define IP6_ADDR_IS_LINKLOCAL(a)	\
+    ((((a).addr[0]) == 0xfeU) && ((((a).addr[1]) & 0xc0U) == 0x80U))
+
 #endif
 

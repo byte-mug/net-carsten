@@ -27,6 +27,7 @@ struct netif_api{
 	void (*ifapi_send_l2_all)(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr);
 	void (*ifapi_send_l3_ipv4)(netif_t* nif,netpkt_t* pkt,void* addr);
 	void (*ifapi_send_l3_ipv6)(netif_t* nif,netpkt_t* pkt,void* addr);
+	void (*ifapi_send_l3_ipv6_all)(netif_t* nif,netpkt_t* pkt,void* addr);
 };
 
 /**
@@ -63,6 +64,15 @@ void netif_api_send_l3_ipv4(netif_t* nif,netpkt_t* pkt,void* addr);
  */
 void netif_api_send_l3_ipv6(netif_t* nif,netpkt_t* pkt,void* addr);
 
+/**
+ * @brief Default implementation of netif_api->ifapi_send_l3_ipv6_all.
+ * @param nif   netif-instance
+ * @param pkt   network packet
+ * @param pkt   destination IPv6-address (Pointer)
+ *
+ * This function sends an entire chain of packets at once.
+ */
+void netif_api_send_l3_ipv6_all(netif_t* nif,netpkt_t* pkt,void* addr);
 
 #endif
 
