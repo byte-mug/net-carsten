@@ -44,53 +44,15 @@ fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *
 }
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add(netif_t *nif, ipv6_addr_t *src_ip, mac_addr_t *ll_addr, fnet_nd6_neighbor_state_t state){
-	netnd6_if_t                 *nd6_if;
-	int                         i;
-	fnet_nd6_neighbor_entry_t   *entry = 0;
+	hwaddr_t addr,*paddr = 0;
 	
-	nd6_if = nif->nd6;
-	
-	if (! nd6_if) return 0;
-
-	/* Find not used entry.*/
-	for(i = 0u; i < FNET_ND6_NEIGHBOR_CACHE_SIZE; i++)
-	{
-		if( (nd6_if->neighbor_cache[i].state == FNET_ND6_NEIGHBOR_STATE_NOTUSED))
-		{
-			entry = &nd6_if->neighbor_cache[i];
-			break;
-		}
+	if(ll_addr){
+		addr.length = 6;
+		memcpy(addr.buffer,ll_addr,6);
+		paddr = &addr;
 	}
 	
-	/* If no free entry is found.*/
-	if(! entry )
-	{
-		entry = &nd6_if->neighbor_cache[0];
-		/* Try to find the oldest entry.*/
-		for(i = 0u; i < FNET_ND6_NEIGHBOR_CACHE_SIZE; i++)
-		{
-			if(nd6_if->neighbor_cache[i].creation_time < entry->creation_time)
-			{
-				entry = &nd6_if->neighbor_cache[i];
-			}
-		}
-	}
-	
-	/* Fill the informationn.*/
-	
-	/* Clear entry structure.*/
-	net_bzero(entry,sizeof(fnet_nd6_neighbor_entry_t) );
-	entry->ip_addr = *src_ip;
-	if( ll_addr )
-		entry->ll_addr = *ll_addr;
-	
-	entry->creation_time = net_timer_seconds();
-	entry->is_router = 0;
-	entry->router_lifetime = 0u;
-	entry->state = state;
-
-        /* TBD Init timers reachable; last send*/
-	return entry;
+	return netnd6_neighbor_cache_add2(nif,src_ip,paddr,state);
 }
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add2(netif_t *nif, ipv6_addr_t *src_ip, hwaddr_t *ll_addr2, fnet_nd6_neighbor_state_t state){
