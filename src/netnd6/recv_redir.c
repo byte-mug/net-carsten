@@ -34,23 +34,18 @@
 
 #include <netstd/endianness.h>
 
-#define AS_MAC(a) *((mac_addr_t*)(a))
-
-/* TODO: move this elsewhere. */
-#define FNET_IP6_DEFAULT_MTU     1280u   /* Minimum IPv6 datagram size which    
-                                          * must be supported by all IPv6 hosts */
-
 void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
 	fnet_nd6_rd_header_t           *hdr;
 	ipv6_addr_t                    target_addr;
 	fnet_nd6_option_header_t       *nd_option;
 	uint32_t                       size;
 	char                           nd_option_tlla;
-	mac_addr_t                     tlla_addr;
 	fnet_nd6_option_lla_header_t   *hdr_tlla;
 	fnet_nd6_neighbor_entry_t      *neighbor_cache_entry;
 	ipv6_addr_t                    queue_addr;
 	netpkt_t                       *pkts = 0;  /* Send-Chain. */
+	
+	hwaddr_t                       tlla_addr2 = nif->device_addr;
 	
 	/*
 	 * Validation RFC4861 (8.1.1).
@@ -124,7 +119,7 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 			if( netpkt_pullup(pkt,size) ) goto DROP;
 			nd_option_tlla = 1;
 			hdr_tlla = netpkt_data(pkt);
-			tlla_addr = AS_MAC(hdr_tlla->addr);
+			netif_hwaddr_load(&tlla_addr2,hdr_tlla->addr);
 		}
 		/* else, silently ignore any options they do not recognize
 		 * and continue processing the message.
@@ -144,16 +139,16 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 			/*  If a Neighbor Cache entry is
 			 * created for the target, its reachability state MUST be set to STALE
 			 * as specified in Section 7.3.3. */
-			neighbor_cache_entry = netnd6_neighbor_cache_add(nif, &target_addr, &tlla_addr, FNET_ND6_NEIGHBOR_STATE_STALE);
+			neighbor_cache_entry = netnd6_neighbor_cache_add2(nif, &target_addr, &tlla_addr2, FNET_ND6_NEIGHBOR_STATE_STALE);
 		}
 		else
 		{
 			/* If a cache entry already existed and
 			 * it is updated with a different link-layer address, its reachability
 			 * state MUST also be set to STALE. */
-			if( !NETIF_MACADDR_EQ(tlla_addr, neighbor_cache_entry->ll_addr) )
+			if( !netif_hwaddr_eq(&tlla_addr2, &(neighbor_cache_entry->ll_addr2)) )
 			{
-				neighbor_cache_entry->ll_addr = tlla_addr;
+				neighbor_cache_entry->ll_addr2 = tlla_addr2;
 				neighbor_cache_entry->state = FNET_ND6_NEIGHBOR_STATE_STALE;
 			}
 		}
@@ -171,7 +166,7 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 			/*  If a Neighbor Cache entry is
 			 * created for the target, its reachability state MUST be set to STALE
 			 * as specified in Section 7.3.3. */
-			neighbor_cache_entry = netnd6_neighbor_cache_add(nif, &target_addr, /*NULLPTR*/0, FNET_ND6_NEIGHBOR_STATE_STALE);
+			neighbor_cache_entry = netnd6_neighbor_cache_add2(nif, &target_addr, /*NULLPTR*/0, FNET_ND6_NEIGHBOR_STATE_STALE);
 		}
 	}
 	
