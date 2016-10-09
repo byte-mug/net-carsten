@@ -84,8 +84,6 @@ DROP:
 	netpkt_free(pkt);
 }
 
-//(struct fnet_netif *netif /*MUST*/, const fnet_ip6_addr_t *ipsrc /* NULL for, DAD */, const fnet_ip6_addr_t *ipdest /*set for NUD,  NULL for DAD & AR */, const fnet_ip6_addr_t *target_addr)
-
 void netnd6_neighbor_solicitation_send(netif_t *nif, ipv6_addr_t *src_ip /* NULL for, DAD */, ipv6_addr_t *dst_ip /*set for NUD,  NULL for DAD & AR */, ipv6_addr_t *targ_ip){
 	size_t                          na_packet_size;
 	size_t                          option_size;
