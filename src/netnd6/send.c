@@ -20,7 +20,6 @@
 #include <netnd6/send.h>
 #include <netnd6/nd6_header.h>
 #include <netpkt/pkt.h>
-#include <netif/mac.h>
 #include <netsock/addr.h>
 #include <neticmp6/output.h>
 
@@ -30,14 +29,28 @@
 
 void netnd6_neighbor_advertisement_send(netif_t *nif, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip, uint8_t na_flags){
 	size_t                          na_packet_size;
+	size_t                          option_size;
 	netpkt_t                        *pkt;
 	fnet_nd6_na_header_t            *na_packet;
 	fnet_nd6_option_lla_header_t    *nd_option_tlla;
 	net_sockaddr_t                  src_addr;
 	net_sockaddr_t                  dst_addr;
 
-	na_packet_size = sizeof(fnet_nd6_na_header_t) + sizeof(fnet_nd6_option_header_t) + sizeof(mac_addr_t);
-    
+	/* The ND6_Option_Target_LLA size */
+	option_size = sizeof(fnet_nd6_option_header_t) + NETIF_HWADDR_SIZE(nif);
+	
+	/* Pad the option size to be 8-aligned. */
+	option_size +=7;
+	option_size -= (option_size%8);
+	
+	/*
+	 * Compute the entire packet size.
+	 */
+	na_packet_size = sizeof(fnet_nd6_na_header_t) + option_size;
+	
+	/*
+	 * Allocate the new packet.
+	 */
 	if(! (pkt = netmem_alloc_pkt(na_packet_size)) ) return;
 
 	na_packet = netpkt_data(pkt);
@@ -46,12 +59,14 @@ void netnd6_neighbor_advertisement_send(netif_t *nif, ipv6_addr_t *src_ip, ipv6_
 	
 	/* NA header.*/
 	na_packet->flag = na_flags;    /* Flag parameter.*/
-	net_bzero( na_packet->_reserved, sizeof(na_packet->_reserved));  /* Set to zeros the reserved field.*/
+	net_bzero( na_packet->_reserved, sizeof(na_packet->_reserved));     /* Set to zeros the reserved field.*/
 	na_packet->target_addr = *src_ip;
 	
 	nd_option_tlla = (fnet_nd6_option_lla_header_t*)(&(na_packet[1]));
-	nd_option_tlla->option_header.type = FNET_ND6_OPTION_TARGET_LLA; /* Type. */
-	nd_option_tlla->option_header.length = (uint8_t)((sizeof(mac_addr_t) + sizeof(fnet_nd6_option_header_t)) >> 3); /* Option size devided by 8,*/
+	nd_option_tlla->option_header.type = FNET_ND6_OPTION_TARGET_LLA;    /* Type. */
+	nd_option_tlla->option_header.length = (uint8_t)(option_size >> 3); /* Option size devided by 8, rounded up.*/
+	
+	netif_hwaddr_store(&(nif->device_addr),nd_option_tlla->addr);       /* Store MAC address. */
 	
 	/* Send ICMPv6 message.*/
         
