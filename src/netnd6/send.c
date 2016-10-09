@@ -187,7 +187,7 @@ void netnd6_router_solicitation_send(netif_t *nif){
 	fnet_nd6_na_header_t            *na_packet;
 	
 	fnet_nd6_rs_header_t            *rs_packet;
-	fnet_nd6_option_lla_header_t    *nd_option_tlla;
+	fnet_nd6_option_lla_header_t    *nd_option_slla;
 	net_sockaddr_t                  src_addr;
 	net_sockaddr_t                  dst_addr;
 	int                             has_src_addr;
@@ -231,11 +231,11 @@ void netnd6_router_solicitation_send(netif_t *nif){
 	 */
 	if( has_src_addr ){
 		/* Fill Source link-layer address option.*/
-		nd_option_tlla = (fnet_nd6_option_lla_header_t*)(&(na_packet[1]));
-		nd_option_tlla->option_header.type = FNET_ND6_OPTION_TARGET_LLA;    /* Type. */
-		nd_option_tlla->option_header.length = (uint8_t)(option_size >> 3); /* Option size devided by 8, rounded up.*/
+		nd_option_slla = (fnet_nd6_option_lla_header_t*)(&(na_packet[1]));
+		nd_option_slla->option_header.type = FNET_ND6_OPTION_SOURCE_LLA;    /* Type. */
+		nd_option_slla->option_header.length = (uint8_t)(option_size >> 3); /* Option size devided by 8, rounded up.*/
 		
-		netif_hwaddr_store(&(nif->device_addr),nd_option_tlla->addr);       /* Store MAC address. */
+		netif_hwaddr_store(&(nif->device_addr),nd_option_slla->addr);       /* Store MAC address. */
 	}else{
 		/*
 		 * Source IP address is the
