@@ -60,12 +60,7 @@ void netnd6_neighbor_advertisement_send(netif_t *nif, ipv6_addr_t *src_ip, ipv6_
 	dst_addr.type  = NET_SKA_IN6;
 	dst_addr.ip.v6 = *dst_ip;
 	
-	neticmp6_output(nif,pkt, &src_addr, &dst_addr);
-	/*
-	 * TODO:make sure, the hop-limit is 255
-	 *
-	 * fnet_icmp6_output( netif, ipsrc, ipdest, FNET_ND6_HOP_LIMIT, na_nb);
-	 */
+	neticmp6_output(nif,pkt, &src_addr, &dst_addr,255);
 	return;
 DROP:
 	netpkt_free(pkt);

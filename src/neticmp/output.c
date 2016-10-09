@@ -22,11 +22,13 @@
 #include <netipv4/output.h>
 #include <netipv4/hldefs.h>
 #include <netprot/defaults.h>
+#include <netprot/checksum.h>
 
 void neticmp_output(netif_t *nif,netpkt_t *pkt, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr){
 	fnet_icmp_header_t *hdr;
 	
 	hdr           = netpkt_data(pkt);
+	/* Checksum calculation.*/
 	hdr->checksum = 0u;
 	hdr->checksum = netprot_checksum_buf((void*)hdr,NETPKT_LENGTH(pkt));
 	

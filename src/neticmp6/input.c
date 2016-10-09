@@ -97,7 +97,7 @@ void neticmp6_input(netif_t *nif,netpkt_t *pkt, net_sockaddr_t *src_addr, net_so
 		 * the Echo Request message was received.*/
 		if(IP6_ADDR_IS_MULTICAST(dest_ip)) goto DROP; /* TODO: find corresponding dest_ip to src_ip */
 		
-		neticmp6_output(nif,pkt,dst_addr,src_addr);
+		neticmp6_output(nif,pkt,dst_addr,src_addr,0);
                 break;
 	/**************************
 	 * Packet Too Big Message.
