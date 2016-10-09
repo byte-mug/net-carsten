@@ -96,7 +96,18 @@ int netipv6_addr_is_self(netif_t *nif, ipv6_addr_t *addr, uint16_t pkt_flags){
 }
 
 int netipv6_addr_is_own_ip6_solicited_multicast(netif_t *nif, ipv6_addr_t *addr){
-	// TODO: implement
+	int i;
+	netipv6_if_t* nif6;
+	
+	nif6 = nif->ipv6;
+	
+	for(i=0;i<NETIPV6_IF_ADDR_MAX;++i){
+		/* Skip NOT_USED addresses. */
+		if( !nif6->addrs[i].used ) continue;
+		
+		/* Match the current Solicited Multicast address. */
+		if( IP6ADDR_EQ(*addr,nif6->addrs[i].solicited_multicast_addr) ) return -1;
+	}
 	return 0;
 }
 
