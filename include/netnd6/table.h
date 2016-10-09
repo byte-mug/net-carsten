@@ -21,6 +21,7 @@
 #include <netif/if.h>
 #include <netnd6/if.h>
 #include <netipv6/ipv6.h>
+#include <netipv6/if.h>
 #include <netif/mac.h>
 #include <netif/hwaddr.h>
 
@@ -34,6 +35,11 @@ fnet_nd6_prefix_entry_t*   netnd6_prefix_list_get(netif_t *nif, const ipv6_addr_
 fnet_nd6_prefix_entry_t*   netnd6_prefix_list_add(netif_t *nif, const ipv6_addr_t *prefix, uint32_t prefix_length, net_time_t lifetime);
 
 fnet_nd6_redirect_entry_t* netnd6_redirect_table_add(netif_t *nif, const ipv6_addr_t *destination_addr, const ipv6_addr_t *target_addr);
+
+void netnd6_dad_failed(
+	netif_t *nif,
+	netipv6_if_addr_t *addr_info
+);
 
 #endif
 

@@ -251,3 +251,32 @@ fnet_nd6_redirect_entry_t* netnd6_redirect_table_add(netif_t *nif, const ipv6_ad
 	return entry;
 }
 
+void netnd6_dad_failed(
+	netif_t *nif,
+	netipv6_if_addr_t *addr_info
+){
+	ipv6_addr_t             if_ip6_address;
+	/* RFC 4862: */
+	/* 5.4.5. When Duplicate Address Detection Fails */
+	/* Just remove address, or TBD mark it as dupicate.*/
+	//fnet_netif_unbind_ip6_addr_prv ( nif, addr_info);
+	
+	/* If the address is a link-local address formed from an interface
+	 * identifier based on the hardware address, which is supposed to be
+	 * uniquely assigned (e.g., EUI-64 for an Ethernet interface), IP
+	 * operation on the interface SHOULD be disabled.
+	 * In this case, the IP address duplication probably means duplicate
+	 * hardware addresses are in use, and trying to recover from it by
+	 * configuring another IP address will not result in a usable network.*/
+	net_bzero(&if_ip6_address, sizeof(ipv6_addr_t));
+	if_ip6_address.addr[0] = 0xFEu;
+	if_ip6_address.addr[1] = 0x80u;
+	//fnet_netif_set_ip6_addr_autoconf(nif, &if_ip6_address);
+	
+	if(IP6ADDR_EQ(if_ip6_address, addr_info->address))
+	{
+		nif->ipv6->disabled = 1;
+	}
+}
+
+

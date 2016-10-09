@@ -139,7 +139,7 @@ void netnd6_neighbor_solicitation_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_
 				}
 				else
 				{
-					//fnet_nd6_dad_failed(netif , target_if_addr_info); /* => DAD is failed. */
+					netnd6_dad_failed(nif , target_nifaddr); /* => DAD is failed. */
 					/*
 					 * MUST be silently discarded, if the Target Address is a "tentative"
 					 * address on which Duplicate Address Detection is being performed [ADDRCONF].

@@ -38,6 +38,5 @@ int netipv6_bind_addr_prv(
 	size_t prefix_length /* bits */
 );
 
-
 #endif
 
