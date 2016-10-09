@@ -21,6 +21,7 @@
 #include <netstd/stdint.h>
 #include <netipv4/ipv4.h>
 #include <netif/mac.h>
+#include <netif/hwaddr.h>
 
 #define NETIF_IS_LOOPBACK 0x01
 
@@ -57,6 +58,7 @@ typedef struct netif{
 	
 	/* Device specific. */
 	mac_addr_t device_mac;
+	hwaddr_t   device_addr;
 	uint8_t flags;
 } netif_t;
 

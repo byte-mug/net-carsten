@@ -15,17 +15,21 @@
  */
 
 
-#ifndef _NETND6_RECEIVE_H_
-#define _NETND6_RECEIVE_H_
+#ifndef _NETIF_HWADDR_H_
+#define _NETIF_HWADDR_H_
 
-#include <netif/if.h>
-#include <netpkt/pkt.h>
-#include <netipv6/ipv6.h>
+#include <netstd/stdint.h>
 
-void netnd6_neighbor_solicitation_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
+typedef struct hwaddr_s{
+	uint8_t length;
+	uint8_t buffer[8];
+} hwaddr_t;
+
+int netif_hwaddr_eq(const hwaddr_t* a,const hwaddr_t* b);
+
+int netif_hwaddr_load(hwaddr_t* addr,const void* data);
+
+int netif_hwaddr_store(const hwaddr_t* addr,void* data);
 
 #endif
 

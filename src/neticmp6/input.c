@@ -57,7 +57,7 @@ void neticmp6_input(netif_t *nif,netpkt_t *pkt, net_sockaddr_t *src_addr, net_so
 	 * Neighbor Solicitation.
 	 **************************/
 	case FNET_ICMP6_TYPE_NEIGHBOR_SOLICITATION:
-		netnd6_neighbor_solicitation_reveive(nif,pkt,&src_ip,&dest_ip);
+		netnd6_neighbor_solicitation_receive(nif,pkt,&src_ip,&dest_ip);
 		break;
 	/**************************
 	 * Neighbor Advertisemnt.

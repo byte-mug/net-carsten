@@ -48,7 +48,7 @@ static void netnd6_nsol_handle_lla(
 	ipv6_addr_t *src_ip
 );
 
-void netnd6_neighbor_solicitation_reveive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
+void netnd6_neighbor_solicitation_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
 	fnet_nd6_ns_header_t       *hdr;
 	partial_ipv6_header_t      *iphdr;
 	uint32_t                   size;

@@ -14,18 +14,23 @@
  *   limitations under the License.
  */
 
+#include <netif/hwaddr.h>
+#include <netstd/mem.h>
 
-#ifndef _NETND6_RECEIVE_H_
-#define _NETND6_RECEIVE_H_
+int netif_hwaddr_eq(const hwaddr_t* a,const hwaddr_t* b){
+	if(a->length>8) return 0;
+	if(a->length!=b->length) return 0;
+	return !memcmp(a->buffer,b->buffer,a->length);
+}
 
-#include <netif/if.h>
-#include <netpkt/pkt.h>
-#include <netipv6/ipv6.h>
+int netif_hwaddr_load(hwaddr_t* addr,const void* data){
+	if(addr->length>8) return 0;
+	memcpy(addr->buffer,data,addr->length);
+	return 1;
+}
 
-void netnd6_neighbor_solicitation_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-
-#endif
-
+int netif_hwaddr_store(const hwaddr_t* addr,void* data){
+	if(addr->length>8) return 0;
+	memcpy(data,addr->buffer,addr->length);
+	return 1;
+}

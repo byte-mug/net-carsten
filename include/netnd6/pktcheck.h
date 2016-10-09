@@ -15,17 +15,18 @@
  */
 
 
-#ifndef _NETND6_RECEIVE_H_
-#define _NETND6_RECEIVE_H_
+#ifndef _NETND6_PKTCHECK_H_
+#define _NETND6_PKTCHECK_H_
 
-#include <netif/if.h>
 #include <netpkt/pkt.h>
-#include <netipv6/ipv6.h>
 
-void netnd6_neighbor_solicitation_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_router_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
-void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip);
+/*
+ * RFC4861 - Validation: All included options have a length
+ * that is greater than zero.
+ *
+ * Returns 0 if Validation passed, non-0 if not.
+ */
+int netnd6_check_options(netpkt_t *pkt);
 
 #endif
 
