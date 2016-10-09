@@ -41,5 +41,10 @@ void netnd6_dad_failed(
 	netipv6_if_addr_t *addr_info
 );
 
+void netnd6_dad_start(
+	netif_t *nif,
+	netipv6_if_addr_t *addr_info
+);
+
 #endif
 

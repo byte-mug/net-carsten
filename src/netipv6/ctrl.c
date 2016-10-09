@@ -21,6 +21,7 @@
 #include <netipv6/defs.h>
 #include <netstd/mem.h>
 #include <netif/mac.h>
+#include <netnd6/table.h>
 
 #define IPV6_PREFIX_LENGTH_DEFAULT       (64U)            /* Default prefix length, in bits.*/
 
@@ -56,6 +57,27 @@ int netipv6_set_ip6_addr_autoconf(netif_t *netif, ipv6_addr_t *ip_addr)
 	}
 	return result;
 }
+
+void netipv6_get_solicited_multicast_addr(const ipv6_addr_t *ip_addr, ipv6_addr_t *solicited_multicast_addr)
+{
+    solicited_multicast_addr->addr[0] = 0xFFu;
+    solicited_multicast_addr->addr[1] = 0x02u;
+    solicited_multicast_addr->addr[2] = 0x00u;
+    solicited_multicast_addr->addr[3] = 0x00u;
+    solicited_multicast_addr->addr[4] = 0x00u;
+    solicited_multicast_addr->addr[5] = 0x00u;
+    solicited_multicast_addr->addr[6] = 0x00u;
+    solicited_multicast_addr->addr[7] = 0x00u;
+    solicited_multicast_addr->addr[8] = 0x00u;
+    solicited_multicast_addr->addr[9] = 0x00u;
+    solicited_multicast_addr->addr[10] = 0x00u;
+    solicited_multicast_addr->addr[11] = 0x01u;
+    solicited_multicast_addr->addr[12] = 0xFFu;
+    solicited_multicast_addr->addr[13] = ip_addr->addr[13];
+    solicited_multicast_addr->addr[14] = ip_addr->addr[14];
+    solicited_multicast_addr->addr[15] = ip_addr->addr[15];
+}
+
 
 /************************************************************************
 * DESCRIPTION: This function binds the IPv6 address to a hardware interface.
@@ -135,7 +157,7 @@ int netipv6_bind_addr_prv(
 			if_addr_ptr->state = FNET_NETIF_IP6_ADDR_STATE_TENTATIVE;
 			
 			/* Get&Set the solicited-node multicast group-address for assigned ip_addr. */
-			//fnet_ip6_get_solicited_multicast_addr(&if_addr_ptr->address, &if_addr_ptr->solicited_multicast_addr);
+			netipv6_get_solicited_multicast_addr(&if_addr_ptr->address, &if_addr_ptr->solicited_multicast_addr);
 			
 			/*************************************************************************
 			 * Join Multicast ADDRESSES.
@@ -152,8 +174,7 @@ int netipv6_bind_addr_prv(
 			 * independently of whether they are obtained via stateless
 			 * autoconfiguration or DHCPv6.
 			 */
-			//fnet_nd6_dad_start(netif , if_addr_ptr);
-			// TODO: implement!
+			netnd6_dad_start(nif,if_addr_ptr);
 		}
 		else
 		{

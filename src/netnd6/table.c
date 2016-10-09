@@ -20,6 +20,7 @@
 #include <netstd/mem.h>
 #include <netipv6/defs.h>
 #include <netipv6/ctrl.h>
+#include <netnd6/send.h>
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *src_ip){
 	netnd6_if_t                 *nd6_if;
@@ -279,6 +280,21 @@ void netnd6_dad_failed(
 	{
 		nif->ipv6->disabled = 1;
 	}
+}
+
+void netnd6_dad_start(
+	netif_t *nif,
+	netipv6_if_addr_t *addr_info
+){
+	if(!addr_info) return;
+	if(addr_info->state != FNET_NETIF_IP6_ADDR_STATE_TENTATIVE) return;
+	/*
+	 * To check an address, a node sends DAD Neighbor
+	 * Solicitations, each separated by 1 second(TBD)..
+	 */
+	addr_info->dad_transmit_counter = 1;
+	addr_info->state_time = net_timer_ms();  /* Save state time.*/
+	netnd6_neighbor_solicitation_send(nif, 0 /* NULL for, DAD */, 0 /*set for NUD,  NULL for DAD & AR */, &(addr_info->address));
 }
 
 

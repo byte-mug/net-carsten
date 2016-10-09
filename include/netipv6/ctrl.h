@@ -32,6 +32,8 @@
 
 int netipv6_set_ip6_addr_autoconf(netif_t *netif, ipv6_addr_t *ip_addr);
 
+void netipv6_get_solicited_multicast_addr(const ipv6_addr_t *ip_addr, ipv6_addr_t *solicited_multicast_addr);
+
 int netipv6_bind_addr_prv(
 	netif_t *nif,
 	const ipv6_addr_t *addr,

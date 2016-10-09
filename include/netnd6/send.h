@@ -26,5 +26,7 @@
 
 void netnd6_neighbor_advertisement_send(netif_t *nif, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip, uint8_t na_flags);
 
+void netnd6_neighbor_solicitation_send(netif_t *nif, ipv6_addr_t *src_ip /* NULL for, DAD */, ipv6_addr_t *dst_ip /*set for NUD,  NULL for DAD & AR */, ipv6_addr_t *targ_ip);
+
 #endif
 
