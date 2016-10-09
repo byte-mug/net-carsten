@@ -226,7 +226,7 @@ void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr
 				/* b. Otherwise, the received advertisement should be ignored and
 				 *    MUST NOT update the cache.
 				 */
-				goto DROP;
+				goto DROP_L;
 			}
 			/* II. If the Override flag is set, or the supplied link-layer address
 			 *     is the same as that in the cache, or no Target Link-Layer Address
