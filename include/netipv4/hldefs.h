@@ -2,7 +2,6 @@
  *   Copyright 2016 Simon Schmidt
  *   Copyright 2011-2016 by Andrey Butok. FNET Community.
  *   Copyright 2008-2010 by Andrey Butok. Freescale Semiconductor, Inc.
- *   Copyright 2003 by Andrey Butok. Motorola SPS.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,18 +16,18 @@
  *   limitations under the License.
  */
 
-#include <neticmp/output.h>
-#include <neticmp/icmp_header.h>
-#include <netipv4/output.h>
-#include <netipv4/hldefs.h>
-#include <netprot/defaults.h>
 
-void neticmp_output(netif_t *nif,netpkt_t *pkt, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr){
-	fnet_icmp_header_t *hdr;
-	
-	hdr           = netpkt_data(pkt);
-	hdr->checksum = 0u;
-	hdr->checksum = netprot_checksum_buf((void*)hdr,NETPKT_LENGTH(pkt));
-	
-	netipv4_output(nif,pkt,src_addr,dst_addr,IP_PROTOCOL_ICMP, IP_TOS_NORMAL, IP_TTL_DEFAULT, /*DF=*/0, /*dont_route=*/0 );
-}
+#ifndef _NETIPV4_HLDEFS_H_
+#define _NETIPV4_HLDEFS_H_
+
+
+/************************************************************************
+*    Definitions for IP type of service.
+*************************************************************************/
+#define IP_TOS_NORMAL      (0x0U)
+#define IP_TOS_LOWDELAY    (0x10U)
+#define IP_TOS_THROUGHPUT  (0x08U)
+#define IP_TOS_RELIABILITY (0x04U)
+
+#endif
+
