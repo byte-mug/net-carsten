@@ -28,28 +28,25 @@
 * DESCRIPTION: This function binds the IPv6 address to a hardware interface.
 *************************************************************************/
 
-static int netipv6_set_ip6_addr_autoconf(netif_t *netif, ipv6_addr_t *ip_addr)
+int netipv6_set_ip6_addr_autoconf(netif_t *netif, ipv6_addr_t *ip_addr)
 {
 	int result = 0;
-	uint8_t hw_addr[8];
+	uint8_t *hw_addr;
 	
-	*((mac_addr_t*)hw_addr) = netif->device_mac;
+	hw_addr = netif->device_addr.buffer;
 	
 	{
-
 		/* Build Interface identifier.*/
 		/* Set the 8 last bytes of the IP address based on the Layer 2 identifier.*/
-		/* switch(sizeof(mac_addr_t)) */
+		switch(netif->device_addr.length)
 		{
-#if 0
 		case 6: /* IEEE 48-bit MAC addresses. */
-#endif
 			memcpy(&(ip_addr->addr[8]), hw_addr,  3u);
 			ip_addr->addr[11] = 0xffu;
 			ip_addr->addr[12] = 0xfeu;
 			memcpy(&(ip_addr->addr[13]), hw_addr+3,  3u);
 			ip_addr->addr[8] ^= 0x02u;
-#if 0
+
 			break;
 		case 8: /* IEEE EUI-64 identifier.*/
 			memcpy(&(ip_addr->addr[8]), hw_addr,  8u);
@@ -57,9 +54,8 @@ static int netipv6_set_ip6_addr_autoconf(netif_t *netif, ipv6_addr_t *ip_addr)
 			break;
 		/* TBD for others.*/
 		default:
-			result = FNET_ERR;
+			result = -1;
 			break;
-#endif
 		}
 	}
 	return result;
@@ -167,5 +163,16 @@ int netipv6_bind_addr_prv(
 	}
 COMPLETE:
 	return result;
+}
+
+int netipv6_unbind_addr_prv ( netif_t *nif, netipv6_if_addr_t *if_addr) {
+	if(! (nif && if_addr && (if_addr->used) ) ) return -1;
+	
+	/* Leave Multicast group.*/
+	//fnet_ip6_multicast_leave(netif, &if_addr->solicited_multicast_addr);
+	
+	/* Mark as Not Used.*/
+	if_addr->used = 0;
+	return 0;
 }
 

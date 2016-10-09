@@ -19,6 +19,7 @@
 #include <netnd6/table.h>
 #include <netstd/mem.h>
 #include <netipv6/defs.h>
+#include <netipv6/ctrl.h>
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *src_ip){
 	netnd6_if_t                 *nd6_if;
@@ -260,6 +261,7 @@ void netnd6_dad_failed(
 	/* 5.4.5. When Duplicate Address Detection Fails */
 	/* Just remove address, or TBD mark it as dupicate.*/
 	//fnet_netif_unbind_ip6_addr_prv ( nif, addr_info);
+	netipv6_unbind_addr_prv( nif, addr_info);
 	
 	/* If the address is a link-local address formed from an interface
 	 * identifier based on the hardware address, which is supposed to be
@@ -271,7 +273,7 @@ void netnd6_dad_failed(
 	net_bzero(&if_ip6_address, sizeof(ipv6_addr_t));
 	if_ip6_address.addr[0] = 0xFEu;
 	if_ip6_address.addr[1] = 0x80u;
-	//fnet_netif_set_ip6_addr_autoconf(nif, &if_ip6_address);
+	netipv6_set_ip6_addr_autoconf(nif,&if_ip6_address);
 	
 	if(IP6ADDR_EQ(if_ip6_address, addr_info->address))
 	{

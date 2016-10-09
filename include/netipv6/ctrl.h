@@ -30,6 +30,8 @@
 * DESCRIPTION: This function binds the IPv6 address to a hardware interface.
 *************************************************************************/
 
+int netipv6_set_ip6_addr_autoconf(netif_t *netif, ipv6_addr_t *ip_addr);
+
 int netipv6_bind_addr_prv(
 	netif_t *nif,
 	const ipv6_addr_t *addr,
@@ -37,6 +39,7 @@ int netipv6_bind_addr_prv(
 	net_time_t lifetime /*in seconds*/,
 	size_t prefix_length /* bits */
 );
+int netipv6_unbind_addr_prv (netif_t *nif, netipv6_if_addr_t *if_addr);
 
 #endif
 
