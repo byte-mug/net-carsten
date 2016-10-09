@@ -29,7 +29,6 @@
 #include <netipv6/check.h>
 #include <netipv6/if.h>
 
-#include <netif/mac.h>
 #include <netif/ifapi.h>
 
 #include <netstd/endianness.h>
