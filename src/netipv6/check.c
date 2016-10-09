@@ -111,6 +111,54 @@ int netipv6_addr_is_own_ip6_solicited_multicast(netif_t *nif, ipv6_addr_t *addr)
 	return 0;
 }
 
+
+/*
+ * Selects the best source address to use with a destination address.
+ * Just enough to implement Neighbor Solicitation Message.
+ */
+int netipv6_select_src_addr_nsol(netif_t *nif, ipv6_addr_t *src, const ipv6_addr_t *dest){
+	int i,j;
+	int best,best_cp;
+	netipv6_if_t* nif6;
+	
+	nif6 = nif->ipv6;
+	
+	/*
+	 * Perform a "Longest Prefix Search" on all IPv6 addresses.
+	 */
+	best = NETIPV6_IF_ADDR_MAX;
+	best_cp = 0;
+	for(i=0;i<NETIPV6_IF_ADDR_MAX;++i){
+		/* Skip NOT_USED addresses. */
+		if( !nif6->addrs[i].used ) continue;
+		
+		/* Figure out the common prefix length. */
+		for(j = 0 ; j<16 ; ++j ) {
+			if(nif6->addrs[i].address.addr[j] != dest->addr[j]) break;
+		}
+		
+		if( j > best_cp ) {
+			best_cp = j;
+			best = i;
+		}
+		
+		/*
+		 * IBM z/OS:
+		 *   If either address is the destination address, choose that
+		 *   address as the source address and terminate the entire
+		 *   algorithm.
+		 */
+		if( j == 16) break;
+	}
+	
+	if( best != NETIPV6_IF_ADDR_MAX ){
+		*src = nif6->addrs[best].address;
+		return -1;
+	}
+	
+	return 0;
+}
+
 struct netipv6_if_addr* netipv6_get_address_info(netif_t *nif, ipv6_addr_t *addr){
 	int i;
 	netipv6_if_t* nif6;

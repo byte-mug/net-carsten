@@ -146,16 +146,8 @@ void netnd6_neighbor_solicitation_send(netif_t *nif, ipv6_addr_t *src_ip /* NULL
 		 * interface should be used.
 		 */
 		if(!netipv6_addr_is_self(nif, src_ip, 0)){
-			#if 0
-			ipsrc = fnet_ip6_select_src_addr(netif, ipdest);
-			
-			if(ipsrc == FNET_NULL)
-			{
-			goto DROP; /* Just in case. Should never happen.*/
-			}
-			#endif
-			src_addr.ip.v6 = *src_ip;
-			// TODO: Implement!
+			if(! netipv6_select_src_addr_nsol(nif,&src_addr.ip.v6,&dst_addr.ip.v6) )
+				goto DROP; /* Just in case. Should never happen.*/
 		}else{
 			src_addr.ip.v6 = *src_ip;
 		}

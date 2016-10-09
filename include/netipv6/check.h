@@ -36,6 +36,12 @@ int netipv6_addr_is_self(netif_t *nif, ipv6_addr_t *addr, uint16_t pkt_flags);
 int netipv6_addr_is_own_ip6_solicited_multicast(netif_t *nif, ipv6_addr_t *addr);
 
 /*
+ * Selects the best source address to use with a destination address.
+ * Just enough to implement Neighbor Solicitation Message.
+ */
+int netipv6_select_src_addr_nsol(netif_t *nif, ipv6_addr_t *src, const ipv6_addr_t *dest);
+
+/*
  * Returns an IPv6-address entry from the netif_t object.
  */
 struct netipv6_if_addr* netipv6_get_address_info(netif_t *nif, ipv6_addr_t *addr);
