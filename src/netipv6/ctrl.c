@@ -24,10 +24,6 @@
 
 #define IPV6_PREFIX_LENGTH_DEFAULT       (64U)            /* Default prefix length, in bits.*/
 
-/************************************************************************
-* DESCRIPTION: This function binds the IPv6 address to a hardware interface.
-*************************************************************************/
-
 int netipv6_set_ip6_addr_autoconf(netif_t *netif, ipv6_addr_t *ip_addr)
 {
 	int result = 0;
@@ -60,6 +56,10 @@ int netipv6_set_ip6_addr_autoconf(netif_t *netif, ipv6_addr_t *ip_addr)
 	}
 	return result;
 }
+
+/************************************************************************
+* DESCRIPTION: This function binds the IPv6 address to a hardware interface.
+*************************************************************************/
 
 int netipv6_bind_addr_prv(
 	netif_t *nif,
