@@ -159,6 +159,44 @@ int netipv6_select_src_addr_nsol(netif_t *nif, ipv6_addr_t *src, const ipv6_addr
 	return 0;
 }
 
+/*
+ * Selects the best source address to use on router solicitation requests.
+ */
+int netipv6_select_src_addr_rsol(netif_t *nif, ipv6_addr_t *src){
+	int i;
+	int best,best_ll;
+	netipv6_if_t* nif6;
+	
+	nif6 = nif->ipv6;
+	
+	/*
+	 * For a router solicitation, the choice is very simple:
+	 *  - Prefer the Link-Local address.
+	 *  - Fall back to any other address, if there is no such Link-Local address.
+	 */
+	best = NETIPV6_IF_ADDR_MAX;
+	for(i=0;i<NETIPV6_IF_ADDR_MAX;++i){
+		/* Skip NOT_USED addresses. */
+		if( !nif6->addrs[i].used ) continue;
+		
+		/* Just grab an IPv6-address. */
+		if( best == NETIPV6_IF_ADDR_MAX) best = i;
+		
+		/* If we just found a link-local address, terminate the algorithm. */
+		if( IP6_ADDR_IS_LINKLOCAL(nif6->addrs[i].address) ) {
+			best = i;
+			break;
+		}
+	}
+	
+	if(best != NETIPV6_IF_ADDR_MAX){
+		*src = nif6->addrs[best].address;
+		return -1;
+	}
+	
+	return 0;
+}
+
 struct netipv6_if_addr* netipv6_get_address_info(netif_t *nif, ipv6_addr_t *addr){
 	int i;
 	netipv6_if_t* nif6;

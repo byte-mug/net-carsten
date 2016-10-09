@@ -108,7 +108,7 @@ void netnd6_neighbor_solicitation_send(netif_t *nif, ipv6_addr_t *src_ip /* NULL
 	/*
 	 * Compute the entire packet size.
 	 */
-	na_packet_size = sizeof(fnet_nd6_ns_header_t) + option_size;
+	na_packet_size = sizeof(fnet_nd6_ns_header_t) + (src_ip? option_size : 0);
 	
 	/*
 	 * Allocate the new packet.
@@ -179,4 +179,76 @@ void netnd6_neighbor_solicitation_send(netif_t *nif, ipv6_addr_t *src_ip /* NULL
 DROP:
 	netpkt_free(pkt);
 }
+
+void netnd6_router_solicitation_send(netif_t *nif){
+	size_t                          na_packet_size;
+	size_t                          option_size;
+	netpkt_t                        *pkt;
+	fnet_nd6_na_header_t            *na_packet;
+	
+	fnet_nd6_rs_header_t            *rs_packet;
+	fnet_nd6_option_lla_header_t    *nd_option_tlla;
+	net_sockaddr_t                  src_addr;
+	net_sockaddr_t                  dst_addr;
+	int                             has_src_addr;
+	
+	dst_addr.type  = NET_SKA_IN6;
+	dst_addr.ip.v6 = (ipv6_addr_t)IP6_ADDR_LINKLOCAL_ALLROUTERS_INIT;
+	src_addr.type  = NET_SKA_IN6;
+	
+	has_src_addr   = netipv6_select_src_addr_rsol(nif,&src_addr.ip.v6);
+	
+	/* The ND6_Option_Target_LLA size */
+	option_size = sizeof(fnet_nd6_option_header_t) + NETIF_HWADDR_SIZE(nif);
+	
+	/* Pad the option size to be 8-aligned. */
+	option_size +=7;
+	option_size -= (option_size%8);
+	
+	/*
+	 * Compute the entire packet size.
+	 */
+	na_packet_size = sizeof(fnet_nd6_rs_header_t) + ( has_src_addr ? option_size : 0);
+	
+	/*
+	 * Allocate the new packet.
+	 */
+	if(! (pkt = netmem_alloc_pkt(na_packet_size)) ) return;
+	
+	/* Fill ICMP Header */
+	rs_packet = netpkt_data(pkt);
+	rs_packet->icmp6_header.type = FNET_ICMP6_TYPE_NEIGHBOR_ADVERTISEMENT;
+	rs_packet->icmp6_header.code = 0u;
+	
+	/* Fill RS Header.*/
+	net_bzero( rs_packet->_reserved, sizeof(rs_packet->_reserved));    /* Set to zeros the reserved field.*/
+	
+	/*
+	 * RFC4861: The link-layer address of the sender, if
+	 * known. MUST NOT be included if the Source Address
+	 * is the unspecified address. Otherwise, it SHOULD
+	 * be included on link layers that have addresses.
+	 */
+	if( has_src_addr ){
+		/* Fill Source link-layer address option.*/
+		nd_option_tlla = (fnet_nd6_option_lla_header_t*)(&(na_packet[1]));
+		nd_option_tlla->option_header.type = FNET_ND6_OPTION_TARGET_LLA;    /* Type. */
+		nd_option_tlla->option_header.length = (uint8_t)(option_size >> 3); /* Option size devided by 8, rounded up.*/
+		
+		netif_hwaddr_store(&(nif->device_addr),nd_option_tlla->addr);       /* Store MAC address. */
+	}else{
+		/*
+		 * Source IP address is the
+		 * unspecified address.
+		 */
+		src_addr.ip.v6 = (ipv6_addr_t)IP6_ADDR_ANY_INIT;
+	}
+	
+	/* Send ICMPv6 message.*/
+	neticmp6_output(nif,pkt, &src_addr, &dst_addr,255);
+	return;
+DROP:
+	netpkt_free(pkt);
+}
+
 

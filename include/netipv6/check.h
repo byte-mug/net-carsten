@@ -42,6 +42,11 @@ int netipv6_addr_is_own_ip6_solicited_multicast(netif_t *nif, ipv6_addr_t *addr)
 int netipv6_select_src_addr_nsol(netif_t *nif, ipv6_addr_t *src, const ipv6_addr_t *dest);
 
 /*
+ * Selects the best source address to use on router solicitation requests.
+ */
+int netipv6_select_src_addr_rsol(netif_t *nif, ipv6_addr_t *src);
+
+/*
  * Returns an IPv6-address entry from the netif_t object.
  */
 struct netipv6_if_addr* netipv6_get_address_info(netif_t *nif, ipv6_addr_t *addr);
