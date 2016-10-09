@@ -62,6 +62,7 @@ typedef struct netif{
 	uint8_t flags;
 } netif_t;
 
+#define NETIF_HWADDR_SIZE(nif) ((nif)->device_addr.length)
 
 #endif
 

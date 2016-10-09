@@ -47,7 +47,7 @@ int netnd6_check_options(netpkt_t *pkt){
 	
 	return 0;
 	
-	DROP:
+DROP:
 	/*
 	 * Rewind the position.
 	 */

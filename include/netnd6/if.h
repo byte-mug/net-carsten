@@ -25,6 +25,7 @@
 #include <netstd/stdint.h>
 #include <netipv6/ipv6.h>
 #include <netif/mac.h>
+#include <netif/hwaddr.h>
 #include <netstd/time.h>
 #include <netstd/mutex.h>
 
@@ -185,7 +186,8 @@ typedef enum fnet_nd6_neighbor_state
 typedef struct fnet_nd6_neighbor_entry
 {
 	ipv6_addr_t                 ip_addr;        /* Neighbor's on-link unicast IP address. */
-	mac_addr_t                  ll_addr;        /* Its link-layer address. Actual size is defiined by fnet_netif_api_t->netif_hw_addr_size. */
+	mac_addr_t                  ll_addr;        /* Its link-layer address. Actual size is 6! */
+	hwaddr_t                    ll_addr2;       /* Its link-layer address. Actual size is defined within. */
 	net_time_t                  state_time;     /* Time of last state event.*/
 	netpkt_t                    *waiting_pkts;  /* Pointer to any queued packetwaiting for address resolution to complete.*/
 	/* RFC 4861 7.2.2: While waiting for address resolution to complete, the sender MUST,

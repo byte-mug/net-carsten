@@ -40,7 +40,7 @@
                                           * must be supported by all IPv6 hosts */
 
 
-
+#if 0
 static void netnd6_nsol_handle_lla(
 	netif_t *nif,
 	uint32_t size,
@@ -265,6 +265,8 @@ static void netnd6_nsol_handle_lla(
 		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,(void*)&queue_addr);
 	}
 }
+
+#endif
 
 void netnd6_neighbor_advertisement_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
 	uint32_t                   size;

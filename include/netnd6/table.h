@@ -22,10 +22,12 @@
 #include <netnd6/if.h>
 #include <netipv6/ipv6.h>
 #include <netif/mac.h>
+#include <netif/hwaddr.h>
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *src_ip);
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add(netif_t *nif, ipv6_addr_t *src_ip, mac_addr_t *ll_addr, fnet_nd6_neighbor_state_t state);
+fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add2(netif_t *nif, ipv6_addr_t *src_ip, hwaddr_t *ll_addr, fnet_nd6_neighbor_state_t state);
 
 fnet_nd6_prefix_entry_t*   netnd6_prefix_list_get(netif_t *nif, const ipv6_addr_t *prefix);
 
