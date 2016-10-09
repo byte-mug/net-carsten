@@ -35,8 +35,6 @@
 
 #include <netstd/endianness.h>
 
-#define AS_MAC(a) *((mac_addr_t*)(a))
-
 static void netnd6_nsol_handle_lla(
 	netif_t *nif,
 	uint32_t size,
@@ -95,6 +93,9 @@ void netnd6_neighbor_solicitation_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_
 		
 		size = nd_option->length<<3;
 		
+		/*
+		 * Handle Source link-layer address option only.
+		 */
 		if( (nd_option->type == FNET_ND6_OPTION_SOURCE_LLA) ) {
 			if(size >= (sizeof(fnet_nd6_option_header_t) + NETIF_HWADDR_SIZE(nif) ) ){
 				if( netpkt_pullup(pkt,size) ) goto DROP;
