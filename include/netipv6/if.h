@@ -34,15 +34,14 @@
  ******************************************************************************/
 typedef enum
 {
-    FNET_NETIF_IP6_ADDR_STATE_NOT_USED = 0,     /**< @brief Not used.*/
-    FNET_NETIF_IP6_ADDR_STATE_TENTATIVE = 1,    /**< @brief Tentative address - (RFC4862) an address whose uniqueness on a link is being
+    FNET_NETIF_IP6_ADDR_STATE_TENTATIVE = 0,    /**< @brief Tentative address - (RFC4862) an address whose uniqueness on a link is being
                                                  * verified, prior to its assignment to an interface. A tentative
                                                  * address is not considered assigned to an interface in the usual
                                                  * sense. An interface discards received packets addressed to a
                                                  * tentative address, but accepts Neighbor Discovery packets related
                                                  * to Duplicate Address Detection for the tentative address.
                                                  */
-    FNET_NETIF_IP6_ADDR_STATE_PREFERRED = 2 	/**< @brief Preferred address - (RFC4862) an address assigned to an interface whose use by
+    FNET_NETIF_IP6_ADDR_STATE_PREFERRED = 1 	/**< @brief Preferred address - (RFC4862) an address assigned to an interface whose use by
                                                  * upper-layer protocols is unrestricted. Preferred addresses may be
                                                  * used as the source (or destination) address of packets sent from
                                                  * (or to) the interface.
@@ -74,8 +73,8 @@ typedef struct netipv6_if_addr
 	uint32_t      dad_transmit_counter;      /* Counter used by DAD. Equals to the number
 	                                          * of NS transmits till DAD is finished.*/
 	net_time_t    state_time;                /* Time of last state event.*/
-	unsigned      state : 2;                 /* Address current state. (fnet_netif_ip6_addr_state_t)*/
 	unsigned      type  : 2;                 /* How the address was acquired. */
+	unsigned      state : 1;                 /* Address current state. (fnet_netif_ip6_addr_state_t)*/
 	unsigned      used : 1;                  /* Is the entry in use? */
 
 } netipv6_if_addr_t;
