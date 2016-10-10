@@ -58,7 +58,18 @@
 
 #define IP6_ADDR_IS_MULTICAST(a) (((a).addr[0]) == 0xffU)
 
-#define IP6_ADDR_MULTICAST_SCOPE(a) ((a).addr[1])
+/*
+ * RFC 4291 2.7 :
+ *
+ *    +--------+----+----+---------------------------------------------+
+ *    |   8    |  4 |  4 |                  112 bits                   |
+ *    +--------+----+----+---------------------------------------------+
+ *    |11111111|flgs|scop|                  group ID                   |
+ *    +--------+----+----+---------------------------------------------+
+ *
+ *    We are only interested in the lower 4 bits (scop).
+ */
+#define IP6_ADDR_MULTICAST_SCOPE(a) (((a).addr[1])&0xf)
 
 #define IP6_ADDR_IS_UNSPECIFIED(a) \
     (((((a).addr32[0]) == 0U) &&	\
