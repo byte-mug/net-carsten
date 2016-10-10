@@ -15,8 +15,8 @@
  */
 
 
-#ifndef _NETIPV6_CTRL_H_
-#define _NETIPV6_CTRL_H_
+#ifndef _NETIPV6_MULTICAST_H_
+#define _NETIPV6_MULTICAST_H_
 
 #include <netif/if.h>
 #include <netpkt/pkt.h>
