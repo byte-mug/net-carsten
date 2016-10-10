@@ -43,18 +43,6 @@ fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *
 	return 0;
 }
 
-fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add(netif_t *nif, ipv6_addr_t *src_ip, mac_addr_t *ll_addr, fnet_nd6_neighbor_state_t state){
-	hwaddr_t addr,*paddr = 0;
-	
-	if(ll_addr){
-		addr.length = 6;
-		memcpy(addr.buffer,ll_addr,6);
-		paddr = &addr;
-	}
-	
-	return netnd6_neighbor_cache_add2(nif,src_ip,paddr,state);
-}
-
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add2(netif_t *nif, ipv6_addr_t *src_ip, hwaddr_t *ll_addr2, fnet_nd6_neighbor_state_t state){
 	netnd6_if_t                 *nd6_if;
 	int                         i;
