@@ -29,6 +29,7 @@ struct netif_api;
 struct netipv6_if;
 struct netarp_if;
 struct netnd6_if;
+struct netsock_ht;
 
 typedef const struct netif_api* netif_api_v;
 
@@ -55,6 +56,10 @@ typedef struct netif{
 	struct netarp_if  *arp;
 	
 	struct netnd6_if  *nd6;
+	
+	struct netsock_ht *udp;
+	
+	struct netsock_ht *tcp;
 	
 	/* Device specific. */
 	mac_addr_t device_mac;
