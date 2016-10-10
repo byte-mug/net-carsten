@@ -14,7 +14,7 @@
 #   limitations under the License.
 #
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.6.0)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0)
 include (TestBigEndian)
 
 TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
