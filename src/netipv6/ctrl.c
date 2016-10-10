@@ -22,6 +22,7 @@
 #include <netstd/mem.h>
 #include <netif/mac.h>
 #include <netnd6/table.h>
+#include <netipv6/multicast.h>
 
 #define IPV6_PREFIX_LENGTH_DEFAULT       (64U)            /* Default prefix length, in bits.*/
 
@@ -167,7 +168,7 @@ int netipv6_bind_addr_prv(
 			 * addresses assigned to the interface.
 			 **************************************************************************/
 			/* Join solicited multicast address group.*/
-			//fnet_ip6_multicast_join(netif, &if_addr_ptr->solicited_multicast_addr);
+			netipv6_multicast_join_prv(nif, &(if_addr_ptr->solicited_multicast_addr));
 			
 			/* Start Duplicate Address Detection (DAD).
 			 * RFC4862:  The Duplicate Address Detection algorithm is performed on all addresses,
@@ -190,7 +191,7 @@ int netipv6_unbind_addr_prv ( netif_t *nif, netipv6_if_addr_t *if_addr) {
 	if(! (nif && if_addr && (if_addr->used) ) ) return -1;
 	
 	/* Leave Multicast group.*/
-	//fnet_ip6_multicast_leave(netif, &if_addr->solicited_multicast_addr);
+	netipv6_multicast_leave_prv(nif, &(if_addr->solicited_multicast_addr));
 	
 	/* Mark as Not Used.*/
 	if_addr->used = 0;

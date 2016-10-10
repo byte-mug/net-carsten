@@ -26,7 +26,12 @@
 
 #define NETIPV6_IF_ADDR_MAX 8
 
-
+/*
+ * NETIPV6_IF_MULTCAST_MAX must be greater than NETIPV6_IF_ADDR_MAX.
+ * 
+ * NETIPV6_IF_MULTCAST_MAX = (2x NETIPV6_IF_ADDR_MAX) + c
+ */
+#define NETIPV6_IF_MULTCAST_MAX 20
 
 /**************************************************************************/ /*!
  * @brief Possible IPv6 address states.
@@ -79,12 +84,21 @@ typedef struct netipv6_if_addr
 
 } netipv6_if_addr_t;
 
+typedef struct netipv6_if_multicast{
+	ipv6_addr_t   multicast;    /* IPv6 address. */
+	unsigned      refc : 29;    /* Usage counter. */
+	unsigned      used : 1;     /* Entry in use? */
+	unsigned      reported : 1; /* MLD-Report sent? */
+	unsigned      mlddone : 1;  /* MLD-Done sent? */
+} netipv6_if_multicast_t;
+
 typedef struct netipv6_if {
-	netipv6_if_addr_t addrs[NETIPV6_IF_ADDR_MAX];
-	uint8_t           hop_limit;
-	size_t            pmtu;
-	unsigned          disabled : 1; /* < IPv6 is Disabled*/
-	unsigned          pmtu_on : 1; /* < IPv6/ICMPv6 PMTU Enabled*/
+	netipv6_if_addr_t        addrs[NETIPV6_IF_ADDR_MAX];
+	netipv6_if_multicast_t   multicasts[NETIPV6_IF_MULTCAST_MAX];
+	uint8_t                  hop_limit;
+	size_t                   pmtu;
+	unsigned                 disabled : 1; /* < IPv6 is Disabled*/
+	unsigned                 pmtu_on : 1; /* < IPv6/ICMPv6 PMTU Enabled*/
 } netipv6_if_t;
 
 #endif
