@@ -19,6 +19,8 @@
 
 #include <netipv6/ipv6_header.h>
 
+#include <netipv6/defs.h>
+
 enum{
 	I6OPT_KEEP,
 	I6OPT_DISCARD,
@@ -232,7 +234,12 @@ void netipv6_ext_header_process(netif_t *netif, uint8_t *pnext_header, ipv6_addr
 			if( netpkt_pullup(pkt,size) ) goto DROP;
 			
 			switch( netipv6_ext_options(netpkt_data(pkt)+2,size-2) ){
-				
+			case I6OPT_DISCARD_UICMP:
+				if( IP6_ADDR_IS_MULTICAST(*dst) ) goto DROP;
+			case I6OPT_DISCARD_ICMP:
+				goto ICMP_ERROR;
+			case I6OPT_DISCARD:
+				goto DROP;
 			}
 			
 			if( netpkt_pullfront(pkt,size ) ) goto DROP;
@@ -256,6 +263,11 @@ DONE:
 	*pnext_header = next_header;
 	return;
 DROP:
+	netpkt_free(pkt);
+	*ppkt = 0;
+	return;
+ICMP_ERROR:
+	/* TODO: ICMP error message. */
 	netpkt_free(pkt);
 	*ppkt = 0;
 	return;
