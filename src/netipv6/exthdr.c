@@ -41,6 +41,127 @@ static int netipv6_ext_options(void *data,size_t size){
 			data += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
 			size += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
 			break;
+		
+		/*
+		 * RFC 6275  6.3.  Home Address Option:
+		 * 
+		 *  The Home Address option is carried by the Destination Option
+		 *  extension header (Next Header value = 60).  It is used in a packet
+		 *  sent by a mobile node while away from home, to inform the recipient
+		 *  of the mobile node's home address.
+		 * 
+		 *  The Home Address option is encoded in type-length-value (TLV) format
+		 *  as follows:
+		 *  
+		 *  Option Type
+		 *    201 = 0xC9
+		 *
+		 *  Option Length:
+		 *    8-bit unsigned integer.  Length of the option, in octets,
+		 *    excluding the Option Type and Option Length fields.  This field
+		 *    MUST be set to 16.
+		 */
+		case 0xC9:
+			/*
+			 * We recognize this option, but we cannot consume the Home Address (yet).
+			 *
+			 * The option length is required to be 16, however, when the peer violates the
+			 * protocol, we are going to silently ignore it.
+			 */
+			data += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			size += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			break;
+		
+		/*
+		 * RFC 6788   7.  Line-Identification Option (LIO)
+		 *
+		 *   The Line-Identification Option (LIO) is a destination option that can
+		 *   be included in IPv6 datagrams that tunnel Router Solicitation and
+		 *   Router Advertisement messages.  The use of the Line-ID option in any
+		 *   other IPv6 datagrams is not defined by this document.  Multiple Line-
+		 *   ID destination options MUST NOT be present in the same IPv6 datagram.
+		 *   The LIO has no alignment requirement.
+		 *
+		 *    0                   1                   2                   3
+		 *    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		 *                                   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *                                   |  Option Type  | Option Length |
+		 *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *   | LineIDLen     |     Line ID...
+		 *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *
+		 *                Figure 4: Line-Identification Option Layout
+		 *
+		 */
+		case 0x8C:
+			/*
+			 * We recognize this option, but we cannot consume it (yet).
+			 *
+			 */
+			data += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			size += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			break;
+		
+		/* Endpoint Identification (DEPRECATED) [[CHARLES LYNN]] */
+		case 0x8A:
+		/* Deprecated [RFC7731] */
+		case 0x4D:
+			/*
+			 * We recognize this option. Skip it!
+			 */
+			data += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			size += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			break;
+		
+		/* RFC 7731 6.1. MPL Option */
+		/*
+		 * RFC 7731 6.1. MPL Option:
+		 *
+		 *    The MPL Option is carried in MPL Data Messages in an IPv6 Hop-by-Hop
+		 *    Options header, immediately following the IPv6 header.  The MPL
+		 *    Option has the following format:
+		 * 
+		 *       0                   1                   2                   3
+		 *       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		 *                                      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *                                      |  Option Type  |  Opt Data Len |
+		 *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *      | S |M|V|  rsv  |   sequence    |      seed-id (optional)       |
+		 *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 */
+		case 0x6D:
+			/*
+			 * We fundamentally understand it, but it has no effect on us.
+			 */
+			data += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			size += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			break;
+		/*
+		 * RFC 6553   3.  Format of the RPL Option
+		 *
+		 *      0                   1                   2                   3
+		 *      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		 *                                     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *                                     |  Option Type  |  Opt Data Len |
+		 *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *     |O|R|F|0|0|0|0|0| RPLInstanceID |          SenderRank           |
+		 *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *     |                         (sub-TLVs)                            |
+		 *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		 *
+		 *                           Figure 1: RPL Option
+		 */
+		case 0x63:
+			/*
+			 * We fundamentally understand it, but it has no effect on us.
+			 */
+			data += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			size += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			break;
+		/*
+		 * XXX Jumbo Payload [RFC2675]
+		 * case 0xC2:
+		 */
 		/* Unrecognized Options.*/
 		default:
 			/* The Option Type identifiers are internally encoded such that their
@@ -103,7 +224,6 @@ void netipv6_ext_header_process(netif_t *netif, uint8_t *pnext_header, ipv6_addr
 		
 		switch(next_header){
 		case FNET_IP6_TYPE_HOP_BY_HOP_OPTIONS:
-		case FNET_IP6_TYPE_ROUTING_HEADER:
 		case FNET_IP6_TYPE_DESTINATION_OPTIONS:
 			if( netpkt_pullup(pkt,sizeof(netipv6_ext_generic_t)) ) goto DROP;
 			opt_hdr = netpkt_data(pkt);
@@ -115,6 +235,14 @@ void netipv6_ext_header_process(netif_t *netif, uint8_t *pnext_header, ipv6_addr
 				
 			}
 			
+			if( netpkt_pullfront(pkt,size ) ) goto DROP;
+			break;
+		case FNET_IP6_TYPE_ROUTING_HEADER:
+			if( netpkt_pullup(pkt,sizeof(netipv6_ext_generic_t)) ) goto DROP;
+			opt_hdr = netpkt_data(pkt);
+			next_header = opt_hdr->next_header;
+			size = (opt_hdr->hdr_ext_length * 8) + 8;
+			/* TODO: handle routing header. */
 			if( netpkt_pullfront(pkt,size ) ) goto DROP;
 			break;
 		case FNET_IP6_TYPE_NO_NEXT_HEADER: goto DROP;
