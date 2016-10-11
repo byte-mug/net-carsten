@@ -122,5 +122,45 @@ typedef struct NETSTD_PACKED
                                    * including the first 8 octets. */
 } netipv6_ext_generic_t;
 
+/***********************************************************************
+ * Options (used in op-by-Hop Options Header & Destination Options Header)
+ ***********************************************************************
+ * RFC 2460 4.2:
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- - - - - - - - -
+ * | Option Type   | Opt Data Len  | Option Data
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- - - - - - - - -
+ ***********************************************************************/
+typedef struct NETSTD_PACKED
+{
+    uint8_t    type           ;   /* 8-bit identifier of the type of option. */
+    uint8_t    data_length    ;   /* 8-bit unsigned integer. Length of the Option
+                                                         * Data field of this option, in octets. */
+} fnet_ip6_option_header_t;
+
+
+#define FNET_IP6_OPTION_TYPE_PAD1   (0x00u)  /* The Pad1 option is used to insert 
+                                             * one octet of padding into the Options area of a header.*/
+#define FNET_IP6_OPTION_TYPE_PADN   (0x01u)  /* The PadN option is used to insert two or more octets of padding
+                                             * into the Options area of a header. For N octets of padding, the
+                                             * Opt Data Len field contains the value N-2, and the Option Data
+                                             * consists of N-2 zero-valued octets. */
+
+/* RFC 2460: The Option Type identifiers are internally encoded such that their
+ * highest-order two bits specify the action that must be taken if the
+ * processing IPv6 node does not recognize the Option Type:*/
+#define FNET_IP6_OPTION_TYPE_UNRECOGNIZED_MASK          (0xC0u)
+
+#define FNET_IP6_OPTION_TYPE_UNRECOGNIZED_SKIP          (0x00u)  /* 00 - skip over this option and continue processing the header.*/
+#define FNET_IP6_OPTION_TYPE_UNRECOGNIZED_DISCARD       (0x40u)  /* 01 - discard the packet. */
+#define FNET_IP6_OPTION_TYPE_UNRECOGNIZED_DISCARD_ICMP  (0x80u)  /* 10 - discard the packet and, regardless of whether or not the
+                                                                 * packets Destination Address was a multicast address, send an
+                                                                 * ICMP Parameter Problem, Code 2, message to the packets
+                                                                 * Source Address, pointing to the unrecognized Option Type.*/
+#define FNET_IP6_OPTION_TYPE_UNRECOGNIZED_DISCARD_UICMP (0xC0u)  /* 11 - discard the packet and, only if the packets Destination
+                                                                 * Address was not a multicast address, send an ICMP Parameter
+                                                                 * Problem, Code 2, message to the packets Source Address,
+                                                                 * pointing to the unrecognized Option Type.*/
+
+
 #endif
 

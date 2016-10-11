@@ -1,5 +1,7 @@
 /*
  *   Copyright 2016 Simon Schmidt
+ *   Copyright 2011-2016 by Andrey Butok. FNET Community.
+ *   Copyright 2008-2010 by Andrey Butok. Freescale Semiconductor, Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,11 +19,64 @@
 
 #include <netipv6/ipv6_header.h>
 
+enum{
+	I6OPT_KEEP,
+	I6OPT_DISCARD,
+	I6OPT_DISCARD_ICMP,
+	I6OPT_DISCARD_UICMP,
+};
+
+static int netipv6_ext_options(void *data,size_t size){
+	fnet_ip6_option_header_t *option;
+
+	while(size){
+		option=data;
+		switch(option->type){
+		/* The RFC2460 supports only PAD0 and PADN options.*/
+		case FNET_IP6_OPTION_TYPE_PAD1:
+			data++;
+			size--;
+			break;
+		case FNET_IP6_OPTION_TYPE_PADN:
+			data += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			size += sizeof(fnet_ip6_option_header_t) + (size_t)option->data_length;
+			break;
+		/* Unrecognized Options.*/
+		default:
+			/* The Option Type identifiers are internally encoded such that their
+			 * highest-order two bits specify the action that must be taken if the
+			 * processing IPv6 node does not recognize the Option Type.*/
+			switch(option->type & FNET_IP6_OPTION_TYPE_UNRECOGNIZED_MASK){
+			/* 00 - skip over this option and continue processing the header.*/
+			case FNET_IP6_OPTION_TYPE_UNRECOGNIZED_SKIP:
+				break;
+			/* 01 - discard the packet. */
+			case FNET_IP6_OPTION_TYPE_UNRECOGNIZED_DISCARD:
+				return I6OPT_DISCARD;
+			/* 10 - discard the packet and, regardless of whether or not the
+			 *      packet's Destination Address was a multicast address, send an
+			 *      ICMP Parameter Problem, Code 2, message to the packet's
+			 *      Source Address, pointing to the unrecognized Option Type.*/
+			case FNET_IP6_OPTION_TYPE_UNRECOGNIZED_DISCARD_ICMP:
+				return I6OPT_DISCARD_ICMP;
+			/* 11 - discard the packet and, only if the packet's Destination
+			 *      Address was not a multicast address, send an ICMP Parameter
+			 *      Problem, Code 2, message to the packet's Source Address,
+			 *      pointing to the unrecognized Option Type.*/
+			case FNET_IP6_OPTION_TYPE_UNRECOGNIZED_DISCARD_UICMP:
+				return I6OPT_DISCARD_UICMP;
+			}
+		}
+	}
+	return I6OPT_KEEP;
+}
+
 void netipv6_ext_header_process(netif_t *netif, uint8_t *pnext_header, ipv6_addr_t *src, ipv6_addr_t *dst, netpkt_t **ppkt){
 	netpkt_t*                  pkt;
 	uint32_t                   hcount;
 	uint8_t                    next_header;
 	netipv6_ext_generic_t      *opt_hdr;
+	size_t                     size;
 	
 	/* RFC 2460 4:
 	 * Therefore, extension headers must
@@ -53,8 +108,14 @@ void netipv6_ext_header_process(netif_t *netif, uint8_t *pnext_header, ipv6_addr
 			if( netpkt_pullup(pkt,sizeof(netipv6_ext_generic_t)) ) goto DROP;
 			opt_hdr = netpkt_data(pkt);
 			next_header = opt_hdr->next_header;
-			opt_hdr->hdr_ext_length;
-			if( netpkt_pullfront(pkt,8 + opt_hdr->hdr_ext_length ) ) goto DROP;
+			size = (opt_hdr->hdr_ext_length * 8) + 8;
+			if( netpkt_pullup(pkt,size) ) goto DROP;
+			
+			switch( netipv6_ext_options(netpkt_data(pkt)+2,size-2) ){
+				
+			}
+			
+			if( netpkt_pullfront(pkt,size ) ) goto DROP;
 			break;
 		case FNET_IP6_TYPE_NO_NEXT_HEADER: goto DROP;
 		case FNET_IP6_TYPE_FRAGMENT_HEADER:
