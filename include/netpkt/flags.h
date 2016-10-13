@@ -20,8 +20,6 @@
 
 #include <netpkt/seg.h>
 
-#define NETPKT_MAX_LEVELS 8
-
 #define NETPKT_FLAG_BROAD_L2      0x0001
 #define NETPKT_FLAG_BROAD_L3      0x0002
 
