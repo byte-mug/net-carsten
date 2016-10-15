@@ -67,7 +67,7 @@ void netipv6_output(
 	
 	if( netpkt_pushfront( pkt, sizeof(fnet_ip6_header_t) ) ) goto DROP;
 	
-	if( netpkt_pullup( pkt, sizeof(fnet_ip6_header_t) ) ) goto DROP;
+	if( netpkt_pullup_lite( pkt, sizeof(fnet_ip6_header_t) ) ) goto DROP;
 	
 	ip6_header                    =  netpkt_data(pkt);
 	ip6_header->version__tclass   =  (6 << 4) | (tclass>>4);

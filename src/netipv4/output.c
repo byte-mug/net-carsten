@@ -67,7 +67,7 @@ void netipv4_output(
 	/* Construct IP header */
 	if( netpkt_pushfront( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
 	
-	if( netpkt_pullup( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
+	if( netpkt_pullup_lite( pkt, sizeof(fnet_ip_header_t) ) ) goto DROP;
 	
 	ipheader = netpkt_data(pkt);
 	

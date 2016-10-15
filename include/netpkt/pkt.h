@@ -43,6 +43,17 @@ typedef struct netpkt{
 int netpkt_pullup(netpkt_t *pkt,size_t len);
 
 /*
+ * Pulls up 'len' bytes to the current offset, without copying data, so the
+ * data between the current offset and (offset+'len') may be lost.
+ *
+ * This is usefull when a packet header is being prepended and and the
+ * uninitialized data will be overwritten anyways.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
+int netpkt_pullup_lite(netpkt_t *pkt,size_t len);
+
+/*
  * Pull in packet head. Decrease packet data length by removing data from the
  * head of the packet.
  *

@@ -97,6 +97,86 @@ int netpkt_pullup(netpkt_t *pkt,size_t len){
 }
 
 /*
+ * Pulls up 'len' bytes to the current offset, without copying data, so the
+ * data between the current offset and (offset+'len') may be lost.
+ *
+ * This is usefull when a packet header is being prepended and and the
+ * uninitialized data will be overwritten anyways.
+ *
+ * On success it returns 0, non-0 otherwise.
+ */
+int netpkt_pullup_lite(netpkt_t *pkt,size_t len){
+	netpkt_seg_t *seg;
+	netpkt_seg_t *seg2;
+	uint32_t      offset,dend,P,T,L;
+	
+	offset = NETPKT_OFFSET(pkt);
+	
+	/*
+	 * If ( len > NETPKT_LENGTH(pkt) ) then fail fast.
+	 */
+	if( ( offset + len ) > pkt->offset_length ) return -1;
+	
+	seg = pkt->segs;
+	while( seg ){
+		P = NETPKT_SEG_LENGTH(seg);
+
+		/*
+		 * When offset is in [0,P) then stop.
+		 */
+		if( P > offset ) break;
+
+		offset -= P;
+		seg = seg->next;
+	}
+	
+	if( !seg ) return -1;
+	
+	/*
+	 * 'dend' : data end (offset).
+	 */
+	dend = offset + len;
+	
+	if( dend <= P ) return 0; /* It is already continous, don't pull! */
+	
+	seg2 = seg->next;
+	
+	if( !seg2 ) return -1;
+	
+	T = NETPKT_SEG_TAILROOM(seg);
+	
+	/*
+	 * Variable rededication: 'dend' is now 'How much bytes to copy'
+	 */
+	dend -= P;
+	
+	if( dend <= T ){
+		L = NETPKT_SEG_LENGTH(seg2);
+		
+		if( dend > L ) return -1; /* Next segment too short. */
+		
+		seg->data_end  += dend;
+		seg2->data_ptr += dend;
+	}else{
+		/*
+		 * Fallback:
+		 *
+		 * We are unable to pull-up the data, so we push it down to
+		 * the next segment.
+		 */
+		dend = P - offset;
+		
+		L = NETPKT_SEG_HEADROOM(seg2);
+		
+		if( dend > L ) return -1; /* Not enough Headroom. */
+		
+		seg->data_end  -= dend;
+		seg2->data_ptr -= dend;
+	}
+	return 0;
+}
+
+/*
  * Gets the Data pointer to the current offset.
  */
 void *netpkt_data(netpkt_t *pkt){
