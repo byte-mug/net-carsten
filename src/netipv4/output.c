@@ -20,14 +20,17 @@
 #include <netipv4/defs.h>
 #include <netipv4/check.h>
 #include <netipv4/ipv4_header.h>
+#include <netipv4/ipv4_idents.h>
 #include <netstd/endianness.h>
 #include <netif/ifapi.h>
 #include <netprot/checksum.h>
 
+/*
 static uint16_t netipv4_next_id(netif_t *nif){
 	uint32_t nextid = (nif->ipv4_id++);
 	return (uint16_t)nextid;
 }
+*/
 
 void netipv4_output(
 	netif_t *nif,
@@ -86,8 +89,13 @@ void netipv4_output(
 	ipheader->source_addr = src_ip;           /* source address */
 	ipheader->desination_addr = dst_ip;       /* destination address */
 	
+	if(DF){
+		ipheader->flags_fragment_offset = hton16(FNET_IP_DF);
+		ipheader->id = 0;                 /* Id */
+	}
+	
 	ipheader->total_length = hton16((uint16_t)total_length);
-	ipheader->id = hton16(netipv4_next_id(nif)); /* Id */
+	ipheader->id = hton16(netipv4_next_id(nif,src_ip,dst_ip)); /* Id */
 	ipheader->checksum = 0;
 	ipheader->checksum = netprot_checksum_buf((void*)ipheader,sizeof(fnet_ip_header_t));
 	

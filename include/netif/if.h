@@ -31,6 +31,12 @@ struct netarp_if;
 struct netnd6_if;
 struct netsock_ht;
 
+#define NETIPV4_ID_TAB_SIZE 0x1000
+#define NETIPV4_ID_TAB_MASK 0x0FFF
+struct netipv4_idt{
+	volatile uint32_t table[NETIPV4_ID_TAB_SIZE];
+};
+
 typedef const struct netif_api* netif_api_v;
 
 typedef struct netif{
@@ -49,7 +55,7 @@ typedef struct netif{
 		ipv4_addr_t subnetmask;
 		ipv4_addr_t gateway;
 	}ipv4;
-	volatile uint32_t ipv4_id;
+	struct netipv4_idt* ipv4_id;
 	
 	struct netipv6_if *ipv6;
 	
