@@ -25,13 +25,6 @@
 #include <netif/ifapi.h>
 #include <netprot/checksum.h>
 
-/*
-static uint16_t netipv4_next_id(netif_t *nif){
-	uint32_t nextid = (nif->ipv4_id++);
-	return (uint16_t)nextid;
-}
-*/
-
 void netipv4_output(
 	netif_t *nif,
 	netpkt_t *pkt,
@@ -80,22 +73,22 @@ void netipv4_output(
 	
 	ipheader->flags_fragment_offset = hton16(fragment);
 	
-	ipheader->version__header_length = 0x45;  /* Version=4 ; IHL=5 */
-	ipheader->tos = tos;                      /* Type of service */
-	ipheader->flags_fragment_offset = 0;      /* flags & fragment offset field (measured in 8-byte order).*/
-	ipheader->ttl = ttl;                      /* time to live */
-	ipheader->protocol = protocol;            /* protocol */
+	ipheader->version__header_length = 0x45;            /* Version=4 ; IHL=5 */
+	ipheader->tos = tos;                                /* Type of service */
+	ipheader->flags_fragment_offset = hton16(fragment); /* flags & fragment offset field (measured in 8-byte order).*/
+	ipheader->ttl = ttl;                                /* time to live */
+	ipheader->protocol = protocol;                      /* protocol */
 	
-	ipheader->source_addr = src_ip;           /* source address */
-	ipheader->desination_addr = dst_ip;       /* destination address */
+	ipheader->source_addr = src_ip;                     /* source address */
+	ipheader->desination_addr = dst_ip;                 /* destination address */
 	
+	/*
+	 * When the don't fragment flag is being set, set fragment-id to zero.
+	 */
 	if(DF)
-	{
-		ipheader->flags_fragment_offset = hton16(FNET_IP_DF);
-		ipheader->id = 0;                 /* Id */
-	}else{
+		ipheader->id = 0;
+	else
 		ipheader->id = hton16(netipv4_next_id(nif,src_ip,dst_ip)); /* Id */
-	}
 	
 	ipheader->total_length = hton16((uint16_t)total_length);
 	ipheader->checksum = 0;
