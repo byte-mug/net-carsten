@@ -89,13 +89,15 @@ void netipv4_output(
 	ipheader->source_addr = src_ip;           /* source address */
 	ipheader->desination_addr = dst_ip;       /* destination address */
 	
-	if(DF){
+	if(DF)
+	{
 		ipheader->flags_fragment_offset = hton16(FNET_IP_DF);
 		ipheader->id = 0;                 /* Id */
+	}else{
+		ipheader->id = hton16(netipv4_next_id(nif,src_ip,dst_ip)); /* Id */
 	}
 	
 	ipheader->total_length = hton16((uint16_t)total_length);
-	ipheader->id = hton16(netipv4_next_id(nif,src_ip,dst_ip)); /* Id */
 	ipheader->checksum = 0;
 	ipheader->checksum = netprot_checksum_buf((void*)ipheader,sizeof(fnet_ip_header_t));
 	
