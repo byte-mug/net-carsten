@@ -41,6 +41,17 @@ typedef struct NETSTD_PACKED
 
 void netprot_input(netif_t *nif, netpkt_t *pkt, uint8_t protocol, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr){
 	netsock_flow_t* flow;
+	gen_tcp_udp_header_t *porthdr;
+	
+	/* Extract port numbers from UDP and TCP headers. */
+	switch(protocol){
+	case IP_PROTOCOL_UDP:
+	case IP_PROTOCOL_TCP:
+		if( netpkt_pullup( pkt, sizeof(gen_tcp_udp_header_t) ) ) goto DROP;
+		porthdr = netpkt_data(pkt);
+		src_addr->port = porthdr->src_port;
+		dst_addr->port = porthdr->dst_port;
+	}
 
 	switch(protocol){
 	case IP_PROTOCOL_ICMP:
@@ -87,6 +98,7 @@ NO_PROTO:
 		neticmp6_error(nif,pkt,protocol,src_addr,dst_addr,FNET_ICMP6_TYPE_PARAM_PROB,FNET_ICMP6_CODE_PP_NEXT_HEADER);
 		return;
 	}
+DROP:
 	netpkt_free(pkt);
 }
 
