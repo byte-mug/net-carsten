@@ -63,9 +63,7 @@ typedef struct netif{
 	
 	struct netnd6_if  *nd6;
 	
-	struct netsock_ht *udp;
-	
-	struct netsock_ht *tcp;
+	struct netsock_ht *sockets;
 	
 	/* Device specific. */
 	mac_addr_t device_mac;

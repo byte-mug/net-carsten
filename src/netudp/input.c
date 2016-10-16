@@ -17,7 +17,7 @@
 #include <netsock/hashtab.h>
 
 void netudp_input(netif_t *nif,netpkt_t *pkt, netsock_flow_t *flow, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr){
-	netsock_decr_flow(nif->udp,flow);
+	netsock_decr_flow(nif->sockets,flow);
 	netpkt_free(pkt);
 }
 
