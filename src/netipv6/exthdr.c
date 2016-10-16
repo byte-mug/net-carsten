@@ -230,6 +230,7 @@ void netipv6_ext_header_process(netif_t *netif, uint8_t *pnext_header, ipv6_addr
 			if( netpkt_pullup(pkt,sizeof(netipv6_ext_generic_t)) ) goto DROP;
 			opt_hdr = netpkt_data(pkt);
 			next_header = opt_hdr->next_header;
+			pkt->ipv6.error_pointer = NETPKT_OFFSET(pkt);
 			size = (opt_hdr->hdr_ext_length * 8) + 8;
 			if( netpkt_pullup(pkt,size) ) goto DROP;
 			
@@ -248,6 +249,7 @@ void netipv6_ext_header_process(netif_t *netif, uint8_t *pnext_header, ipv6_addr
 			if( netpkt_pullup(pkt,sizeof(netipv6_ext_generic_t)) ) goto DROP;
 			opt_hdr = netpkt_data(pkt);
 			next_header = opt_hdr->next_header;
+			pkt->ipv6.error_pointer = NETPKT_OFFSET(pkt);
 			size = (opt_hdr->hdr_ext_length * 8) + 8;
 			/* TODO: handle routing header. */
 			if( netpkt_pullfront(pkt,size ) ) goto DROP;

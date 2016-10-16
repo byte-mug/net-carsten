@@ -23,6 +23,7 @@
 #include <netsock/addr.h>
 
 void neticmp6_output(netif_t *nif,netpkt_t *pkt, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr,uint8_t hop_limit);
+void neticmp6_error(netif_t *nif,netpkt_t *pkt,uint32_t protocol, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr,uint8_t type,uint8_t code);
 
 #endif
 

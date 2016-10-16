@@ -30,6 +30,30 @@ typedef struct netpkt{
 	uint32_t       offsets[NETPKT_MAX_LEVELS];
 	uint16_t       flags;
 	uint8_t        level;
+	
+	/*
+	 * Layer specific metadata.
+	 */
+	union{
+		struct {
+			/*
+			 * Absolute offset resembling the error-pointer in
+			 * ICMPv6 error messages.
+			 *
+			 * After exiting the IPv6 Layer, it SHALL point to the
+			 * last 'next_header' field.
+			 */
+			uint32_t error_pointer;
+			/*
+			 * If this flag is set, the ICMPv6 param SHALL be set to
+			 * (error_pointer - offset).
+			 * Else, the ICMPv6 param SHALL be set to error_pointer.
+			 *
+			 * After exiting the IPv6 Layer, this flag SHALL be set.
+			 */
+			unsigned param_is_pointer : 1;
+		} ipv6;
+	};
 } netpkt_t;
 
 #define NETPKT_OFFSET(pkt) ( (pkt)->offsets[((pkt)->level)] )

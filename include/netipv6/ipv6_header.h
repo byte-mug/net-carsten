@@ -73,6 +73,11 @@ typedef struct NETSTD_PACKED
                                         * a Routing header is present). */
 } fnet_ip6_header_t;
 
+/*
+ * Offset of the next_header field inside the IPv6 header.
+ */
+#define NETIPV6_IP6HDR_OFFSETOF_NEXT_HEADER  6
+
 #define FNET_IP6_HEADER_GET_VERSION(x)                   (((x)->version__tclass & 0xF0u)>>4)
 
 /******************************************************************

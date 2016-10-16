@@ -18,7 +18,10 @@
 #include <netprot/defaults.h>
 
 #include <neticmp/input.h>
+#include <neticmp/output.h>
 #include <neticmp6/input.h>
+#include <neticmp6/output.h>
+#include <neticmp6/icmp6_header.h>
 #include <netudp/input.h>
 
 #include <netstd/stdint.h>
@@ -59,30 +62,31 @@ void netprot_input(netif_t *nif, netpkt_t *pkt, uint8_t protocol, net_sockaddr_t
 	}
 	
 NO_PROTO:
-	//switch(src_addr->type){
+	switch(src_addr->type){
 	//case NET_SKA_IN:
-	/*
+	/* TODO:
+	 *
 	 * fnet_netbuf_free_chain(nb);
 	 * fnet_icmp_error(netif, FNET_ICMP_UNREACHABLE, FNET_ICMP_UNREACHABLE_PROTOCOL, ip4_nb);
 	 */
-	//case NET_SKA_IN6:
-	/* RFC 2460 4:If, as a result of processing a header, a node is required to proceed
-	 * to the next header but the Next Header value in the current header is
-	 * unrecognized by the node, it should discard the packet and send an
-	 * ICMP Parameter Problem message to the source of the packet, with an
-	 * ICMP Code value of 1 ("unrecognized Next Header type encountered")
-	 * and the ICMP Pointer field containing the offset of the unrecognized
-	 * value within the original packet. The same action should be taken if
-	 * a node encounters a Next Header value of zero in any header other
-	 * than an IPv6 header.*/
-	/*
-	 * fnet_netbuf_free_chain(nb);
-	 * fnet_icmp6_error( netif, FNET_ICMP6_TYPE_PARAM_PROB, FNET_ICMP6_CODE_PP_NEXT_HEADER,
-	 *                (fnet_uint32_t)(next_header) - (fnet_uint32_t)(ip6_nb->data_ptr), ip6_nb );
-	 *
-	 * TBD not tested.
-	 */
-	//}
+	case NET_SKA_IN6:
+		/* RFC 2460 4:If, as a result of processing a header, a node is required to proceed
+		 * to the next header but the Next Header value in the current header is
+		 * unrecognized by the node, it should discard the packet and send an
+		 * ICMP Parameter Problem message to the source of the packet, with an
+		 * ICMP Code value of 1 ("unrecognized Next Header type encountered")
+		 * and the ICMP Pointer field containing the offset of the unrecognized
+		 * value within the original packet. The same action should be taken if
+		 * a node encounters a Next Header value of zero in any header other
+		 * than an IPv6 header.*/
+
+		/*
+		 * When coming from Layer 2, an IPv6 packet carries a pointer to the Last next_header
+		 * inside its netpkt_t structure.
+		 */
+		neticmp6_error(nif,pkt,protocol,src_addr,dst_addr,FNET_ICMP6_TYPE_PARAM_PROB,FNET_ICMP6_CODE_PP_NEXT_HEADER);
+		return;
+	}
 	netpkt_free(pkt);
 }
 

@@ -79,6 +79,15 @@ void netipv6_input( netif_t *netif, netpkt_t *pkt ){
 		pkt->flags |= NETPKT_FLAG_BROAD_L3;
 	
 	/*
+	 * After exiting the IPv6 Layer, it SHALL point to the last 'next_header' field.
+	 */
+	pkt->ipv6.error_pointer     =  NETPKT_OFFSET(pkt)+NETIPV6_IP6HDR_OFFSETOF_NEXT_HEADER;
+	
+	/* After exiting the IPv6 Layer, this flag SHALL be set. */
+	pkt->ipv6.param_is_pointer  =  1;
+	
+	
+	/*
 	 * Remember the current offset in the packet.
 	 */
 	if( netpkt_levelup(pkt) ) goto DROP;
