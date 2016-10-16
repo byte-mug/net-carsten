@@ -129,6 +129,7 @@ netsock_flow_t* netsock_lookup_flow(netsock_ht_t* table, uint8_t protocol, const
 	netsock_flow_t* cur = table->ht_connections[idx];
 	for(;cur;cur = cur->tail){
 		if(cur->hash_a != hash) continue;
+		if(cur->protocol != protocol) continue;
 		if(!netsock_eq(&(cur->remote_a),remote_a)) continue;
 		if(!netsock_eq(&(cur->local_a),local_a)) continue;
 		cur->refc++;
@@ -139,6 +140,23 @@ netsock_flow_t* netsock_lookup_flow(netsock_ht_t* table, uint8_t protocol, const
 	net_mutex_unlock(table->bucket_locks[hash%NETSOCK_HT_PORTS]);
 	return 0;
 }
+netsock_flow_t* netsock_lookup_flow_port(netsock_ht_t* table, uint8_t protocol, const net_sockaddr_t *local_a){
+	const uint16_t idx = local_a->port;
+	
+	net_mutex_lock(table->bucket_locks[idx]);
+	netsock_flow_t* cur = table->ht_ports[idx];
+	for(;cur;cur = cur->tail){
+		if(cur->hash_a != idx) continue;
+		if(cur->protocol != protocol) continue;
+		if(cur->local_a.type && !netsock_eq(&(cur->local_a),local_a)) continue;
+		cur->refc++;
+		
+		net_mutex_unlock(table->bucket_locks[idx]);
+		return cur;
+	}
+	net_mutex_unlock(table->bucket_locks[idx]);
+	return 0;
+}
 
 void netsock_add_flow(netsock_ht_t* table, netsock_flow_t* flow){
 	flow->hash_a = netsock_hash_tuple(flow->protocol,&(flow->remote_a),&(flow->local_a));
@@ -147,6 +165,15 @@ void netsock_add_flow(netsock_ht_t* table, netsock_flow_t* flow){
 	
 	net_mutex_lock(table->bucket_locks[flow->hash_a%NETSOCK_HT_PORTS]);
 	netsock_insert_at(&(table->ht_connections[idx]),flow);
+	net_mutex_unlock(table->bucket_locks[flow->hash_a%NETSOCK_HT_PORTS]);
+}
+void netsock_add_flow_port(netsock_ht_t* table, netsock_flow_t* flow){
+	flow->hash_a = (uint32_t)(flow->local_a.port);
+	flow->refc = 1;
+	const uint32_t idx = flow->hash_a;
+	
+	net_mutex_lock(table->bucket_locks[flow->hash_a%NETSOCK_HT_PORTS]);
+	netsock_insert_at(&(table->ht_ports[idx]),flow);
 	net_mutex_unlock(table->bucket_locks[flow->hash_a%NETSOCK_HT_PORTS]);
 }
 

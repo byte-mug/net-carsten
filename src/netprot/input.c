@@ -54,7 +54,7 @@ void netprot_input(netif_t *nif, netpkt_t *pkt, uint8_t protocol, net_sockaddr_t
 	case IP_PROTOCOL_UDP:
 		if(! nif->udp ) break;
 		flow = netsock_lookup_flow(nif->udp, protocol, src_addr, dst_addr);
-		if(! flow ) break;
+		if(! flow ) flow = netsock_lookup_flow_port(nif->udp, protocol, dst_addr);
 		netudp_input(nif, pkt, flow, src_addr, dst_addr);
 		return;
 	//case IP_PROTOCOL_TCP:

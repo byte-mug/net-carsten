@@ -40,8 +40,10 @@ typedef struct netsock_ht {
  * Looks up a Flow and increments it's reference count.
  */
 netsock_flow_t* netsock_lookup_flow(netsock_ht_t* table, uint8_t protocol, const net_sockaddr_t *remote_a, const net_sockaddr_t *local_a);
+netsock_flow_t* netsock_lookup_flow_port(netsock_ht_t* table, uint8_t protocol, const net_sockaddr_t *local_a);
 
 void netsock_add_flow(netsock_ht_t* table, netsock_flow_t* flow);
+void netsock_add_flow_port(netsock_ht_t* table, netsock_flow_t* flow);
 
 void netsock_remove_flow(netsock_ht_t* table, netsock_flow_t* flow);
 
