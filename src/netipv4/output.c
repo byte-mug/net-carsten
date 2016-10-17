@@ -71,16 +71,14 @@ void netipv4_output(
 	
 	ipheader = netpkt_data(pkt);
 	
-	ipheader->flags_fragment_offset = hton16(fragment);
+	ipheader->version__header_length = 0x45;             /* Version=4 ; IHL=5 */
+	ipheader->tos                    = tos;              /* Type of service */
+	ipheader->flags_fragment_offset  = hton16(fragment); /* flags & fragment offset field (measured in 8-byte order).*/
+	ipheader->ttl                    = ttl;              /* time to live */
+	ipheader->protocol               = protocol;         /* protocol */
 	
-	ipheader->version__header_length = 0x45;            /* Version=4 ; IHL=5 */
-	ipheader->tos = tos;                                /* Type of service */
-	ipheader->flags_fragment_offset = hton16(fragment); /* flags & fragment offset field (measured in 8-byte order).*/
-	ipheader->ttl = ttl;                                /* time to live */
-	ipheader->protocol = protocol;                      /* protocol */
-	
-	ipheader->source_addr = src_ip;                     /* source address */
-	ipheader->desination_addr = dst_ip;                 /* destination address */
+	ipheader->source_addr            = src_ip;           /* source address */
+	ipheader->desination_addr        = dst_ip;           /* destination address */
 	
 	/*
 	 * When the don't fragment flag is being set, set fragment-id to zero.
