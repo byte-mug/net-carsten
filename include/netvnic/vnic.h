@@ -30,7 +30,7 @@ typedef struct netvnic{
 	void           *vnic_in_inst;
 	void           *vnic_out_inst;
 	
-	void (*vnic_input) (struct netvnic* vnic,netpkt_t* pkt);
+	void (*vnic_input) (struct netvnic* vnic,netpkt_t* pkt,uint16_t encap_proto);
 	void (*vnic_output) (struct netvnic* vnic,netpkt_t* pkt,hwaddr_t* dst);
 	
 	hwaddr_t       vnic_hwaddr;

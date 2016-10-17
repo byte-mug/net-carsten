@@ -18,8 +18,11 @@
 #include <netgre/gre_header.h>
 #include <netvnic/vnic.h>
 
+#include <netstd/endianness.h>
+
 void netgre_input(netif_t *nif,netpkt_t *pkt, netsock_flow_t *flow, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr){
 	uint16_t         hdrlen = sizeof(netgre_header_t);
+	uint16_t         protocol_type;
 	netgre_header_t  *hdr;
 	netvnic_t        *vnic;
 	
@@ -31,12 +34,15 @@ void netgre_input(netif_t *nif,netpkt_t *pkt, netsock_flow_t *flow, net_sockaddr
 	if( (hdr->flags & NETGRE_FLAGS_CHECKSUM) &&
 		(!netprot_checksum( pkt, NETPKT_LENGTH(pkt)) ) )
 		goto DROP;
+	
+	protocol_type = ntoh16(hdr->protocol_type);
+	
 	if(hdr->flags & NETGRE_FLAGS_KEY) hdrlen += 4;
 	if(hdr->flags & NETGRE_FLAGS_SEQUENCE) hdrlen += 4;
 	
 	if( netpkt_pullfront( pkt, hdrlen ) ) goto DROP;
 	
-	vnic->vnic_input( vnic, pkt );
+	vnic->vnic_input( vnic, pkt, protocol_type );
 	
 	return;
 DROP:
