@@ -15,8 +15,31 @@
  */
 #include <netgre/input.h>
 #include <netsock/hashtab.h>
+#include <netgre/gre_header.h>
+#include <netvnic/vnic.h>
 
 void netgre_input(netif_t *nif,netpkt_t *pkt, netsock_flow_t *flow, net_sockaddr_t *src_addr, net_sockaddr_t *dst_addr){
+	uint16_t         hdrlen = sizeof(netgre_header_t);
+	netgre_header_t  *hdr;
+	netvnic_t        *vnic;
+	
+	vnic = (netvnic_t*)(flow->instance);
+	
+	if( netpkt_pullup( pkt, hdrlen ) ) goto DROP;
+	
+	hdr = netpkt_data( pkt );
+	if( (hdr->flags & NETGRE_FLAGS_CHECKSUM) &&
+		(!netprot_checksum( pkt, NETPKT_LENGTH(pkt)) ) )
+		goto DROP;
+	if(hdr->flags & NETGRE_FLAGS_KEY) hdrlen += 4;
+	if(hdr->flags & NETGRE_FLAGS_SEQUENCE) hdrlen += 4;
+	
+	if( netpkt_pullfront( pkt, hdrlen ) ) goto DROP;
+	
+	vnic->vnic_input( vnic, pkt );
+	
+	return;
+DROP:
 	netsock_decr_flow(nif->sockets,flow);
 	netpkt_free(pkt);
 }
