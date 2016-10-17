@@ -130,7 +130,7 @@ void neticmp6_error(netif_t *nif,netpkt_t *pkt,uint32_t protocol, net_sockaddr_t
 	icmp6_err_header->data = hton32(param);
 	
 	neticmp6_output(nif,pkt,dst_addr,src_addr,0);
-	
+	return;
 DROP:
 	netpkt_free(pkt);
 }
