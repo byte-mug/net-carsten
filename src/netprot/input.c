@@ -23,6 +23,8 @@
 #include <neticmp6/output.h>
 #include <neticmp6/icmp6_header.h>
 #include <netudp/input.h>
+#include <nettcp/input.h>
+#include <nettcp/response.h>
 
 #include <netstd/stdint.h>
 #include <netstd/packing.h>
@@ -63,13 +65,32 @@ void netprot_input(netif_t *nif, netpkt_t *pkt, uint8_t protocol, net_sockaddr_t
 		neticmp6_input(nif,pkt,src_addr,dst_addr);
 		return;
 	case IP_PROTOCOL_UDP:
-		if(! nif->sockets ) break;
+		if(! nif->sockets ) goto NO_PROTO;
 		flow = netsock_lookup_flow(nif->sockets, protocol, src_addr, dst_addr);
 		if(! flow ) flow = netsock_lookup_flow_port(nif->sockets, protocol, dst_addr);
+		
+		if(! flow ) goto NO_PROTO; /* No socket has been found. */
+		
 		netudp_input(nif, pkt, flow, src_addr, dst_addr);
 		return;
-	//case IP_PROTOCOL_TCP:
+	case IP_PROTOCOL_TCP:
+		/*
+		 * When no socket hashtable is present, we treat TCP as an unreachable protocol.
+		 */
+		if(! nif->sockets ) goto NO_PROTO;
+		flow = netsock_lookup_flow(nif->sockets, protocol, src_addr, dst_addr);
+		if(! flow ) flow = netsock_lookup_flow_port(nif->sockets, protocol, dst_addr);
 		
+		/*
+		 * When eighter a listening socket or a connected socket has
+		 * been found, submit the packet to it.
+		 */
+		if( flow ) nettcp_input(nif, pkt, flow, src_addr, dst_addr);
+		/*
+		 * When port or socket not reachable, send TCP-RST.
+		 */
+		else nettcp_sendrst(nif, src_addr, dst_addr, pkt);
+		return;
 	}
 	
 NO_PROTO:

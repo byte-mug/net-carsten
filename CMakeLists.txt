@@ -49,6 +49,7 @@ file(GLOB NET_SRC
 	src/netprot/*.c
 	src/netsock/*.c
 	src/netstd/*.c
+	src/nettcp/*.c
 	src/netudp/*.c
 	)
 
