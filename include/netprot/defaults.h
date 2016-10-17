@@ -43,4 +43,6 @@
 #define IP_PROTOCOL_TCP    (6)
 #define IP_PROTOCOL_ICMP6  (58)
 
+#define IP_PROTOCOL_GRE    (0x2F)
+
 #endif

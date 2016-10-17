@@ -39,6 +39,7 @@ file(GLOB API_SRC
 file(GLOB NET_SRC
 	# Network stack
 	src/netarp/*.c
+	src/netgre/*.c
 	src/neticmp/*.c
 	src/neticmp6/*.c
 	src/netif/*.c

@@ -24,6 +24,7 @@
 #include <neticmp6/icmp6_header.h>
 #include <netudp/input.h>
 #include <nettcp/input.h>
+#include <netgre/input.h>
 #include <nettcp/response.h>
 
 #include <netstd/stdint.h>
@@ -53,6 +54,10 @@ void netprot_input(netif_t *nif, netpkt_t *pkt, uint8_t protocol, net_sockaddr_t
 		porthdr = netpkt_data(pkt);
 		src_addr->port = porthdr->src_port;
 		dst_addr->port = porthdr->dst_port;
+		break;
+	default:
+		src_addr->port = 0;
+		dst_addr->port = 0;
 	}
 
 	switch(protocol){
@@ -90,6 +95,18 @@ void netprot_input(netif_t *nif, netpkt_t *pkt, uint8_t protocol, net_sockaddr_t
 		 * When port or socket not reachable, send TCP-RST.
 		 */
 		else nettcp_sendrst(nif, src_addr, dst_addr, pkt);
+		return;
+	case IP_PROTOCOL_GRE:
+		/*
+		 * GRE uses the socket hashtable.
+		 */
+		if(! nif->sockets ) goto NO_PROTO;
+		
+		flow = netsock_lookup_flow(nif->sockets, protocol, src_addr, dst_addr);
+		if(! flow ) flow = netsock_lookup_flow_port(nif->sockets, protocol, dst_addr);
+		if(! flow ) goto NO_PROTO;
+		
+		netgre_input(nif, pkt, flow, src_addr, dst_addr);
 		return;
 	}
 	
