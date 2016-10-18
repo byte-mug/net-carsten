@@ -18,7 +18,9 @@
 #ifndef _NETIF_L2DEFS_H_
 #define _NETIF_L2DEFS_H_
 
-
+/*
+ * The 'EtherType' value for implemented protocols like IP and ARP.
+ */
 #define NETPROT_L3_IPV4   0x0800
 #define NETPROT_L3_ARP    0x0806
 
