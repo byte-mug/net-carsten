@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-#include <netif/driveri.h>
+#include <netif/driverinput.h>
 
 #include <netipv4/input.h>
 #include <netipv6/input.h>

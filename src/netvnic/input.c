@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 #include <netvnic/input.h>
-#include <netif/driveri.h>
+#include <netif/driverinput.h>
 
 void netvnic_input_nif (netvnic_t* vnic,netpkt_t* pkt,uint16_t protocol){
 	netif_input_layer3((netif_t*)(vnic->vnic_in_inst), pkt, protocol);
