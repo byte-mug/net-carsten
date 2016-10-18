@@ -13,26 +13,13 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-#include <netvnic/input.h>
 
-#include <netipv4/input.h>
-#include <netipv6/input.h>
-#include <netarp/input.h>
 
-#include <netprot/l2defs.h>
+#ifndef _NETVNIC_INPUT_H_
+#define _NETVNIC_INPUT_H_
 
-void netvnic_input_nif (netvnic_t* vnic,netpkt_t* pkt,uint16_t protocol){
-	switch(protocol){
-	case NETPROT_L3_IPV4:
-		netipv4_input( (netif_t*)(vnic->vnic_in_inst), pkt );
-		return;
-	case NETPROT_L3_ARP:
-		netarp_input( (netif_t*)(vnic->vnic_in_inst), pkt );
-		return;
-	case NETPROT_L3_IPV6:
-		netipv6_input( (netif_t*)(vnic->vnic_in_inst), pkt );
-		return;
-	}
-	netpkt_free(pkt);
-}
+#include <netvnic/vnic.h>
 
+void netvnic_input_nif (netvnic_t* vnic,netpkt_t* pkt,uint16_t protocol);
+
+#endif
