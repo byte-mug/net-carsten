@@ -13,10 +13,26 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-#include <netvnic/input.h>
 #include <netif/driveri.h>
 
-void netvnic_input_nif (netvnic_t* vnic,netpkt_t* pkt,uint16_t protocol){
-	netif_input_layer3((netif_t*)(vnic->vnic_in_inst), pkt, protocol);
+#include <netipv4/input.h>
+#include <netipv6/input.h>
+#include <netarp/input.h>
+
+#include <netif/l2defs.h>
+
+void netif_input_layer3 (netif_t* nif,netpkt_t* pkt,uint16_t protocol){
+	switch(protocol){
+	case NETPROT_L3_IPV4:
+		netipv4_input( nif, pkt );
+		return;
+	case NETPROT_L3_ARP:
+		netarp_input( nif, pkt );
+		return;
+	case NETPROT_L3_IPV6:
+		netipv6_input( nif, pkt );
+		return;
+	}
+	netpkt_free(pkt);
 }
 

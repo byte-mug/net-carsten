@@ -15,13 +15,12 @@
  */
 
 
-#ifndef _NETPROT_L2DEFS_H_
-#define _NETPROT_L2DEFS_H_
+#ifndef _NETIF_DRIVERI_H_
+#define _NETIF_DRIVERI_H_
 
+#include <netif/if.h>
+#include <netpkt/pkt.h>
 
-#define NETPROT_L3_IPV4   0x0800
-#define NETPROT_L3_ARP    0x0806
-
-#define NETPROT_L3_IPV6   0x86DD
+void netif_input_layer3 (netif_t* nif,netpkt_t* pkt,uint16_t protocol);
 
 #endif
