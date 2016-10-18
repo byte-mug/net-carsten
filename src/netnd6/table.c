@@ -20,6 +20,7 @@
 #include <netstd/mem.h>
 #include <netipv6/defs.h>
 #include <netipv6/ctrl.h>
+#include <netipv6/check.h>
 #include <netnd6/send.h>
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *src_ip){
@@ -105,6 +106,30 @@ fnet_nd6_prefix_entry_t*   netnd6_prefix_list_get(netif_t *nif, const ipv6_addr_
 	for(i = 0u; i < FNET_ND6_PREFIX_LIST_SIZE; i++)
 	{
 		if( (nd6_if->prefix_list[i].used) && IP6ADDR_EQ(nd6_if->prefix_list[i].prefix, *prefix))
+		{
+			return &nd6_if->prefix_list[i];
+		}
+	}
+	return 0;
+}
+
+fnet_nd6_prefix_entry_t*   netnd6_prefix_list_lookup(netif_t *nif, const ipv6_addr_t *addr){
+	netnd6_if_t                 *nd6_if;
+	int                         i;
+
+	nd6_if = nif->nd6;
+	
+	if (! nd6_if) return 0;
+	
+	/* Find the entry in the list. */
+	for(i = 0u; i < FNET_ND6_PREFIX_LIST_SIZE; i++)
+	{
+		if(! (nd6_if->prefix_list[i].used) ) continue;
+		
+		if(netipv6_addr_pefix_cmp(
+				&(nd6_if->prefix_list[i].prefix),addr,
+				nd6_if->prefix_list[i].prefix_length
+			))
 		{
 			return &nd6_if->prefix_list[i];
 		}

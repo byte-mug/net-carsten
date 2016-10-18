@@ -150,7 +150,7 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
 			 * on-link and for which the sender does not know the corresponding link-layer address.
 			 * Address resolution is never performed on multicast addresses.
 			 */
-			if( 1 )
+			if( netnd6_prefix_list_lookup(nif,&ipaddr) )
 			/* Destimnation is ON local-link.*/
 			{
 				neighbor = netnd6_neighbor_cache_add2(nif, &ipaddr, 0, FNET_ND6_NEIGHBOR_STATE_INCOMPLETE);
