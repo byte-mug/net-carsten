@@ -18,6 +18,7 @@
  */
 #include <netarp/table.h>
 #include <netarp/if.h>
+#include <netarp/output.h>
 
 static int netarp_tab_find(netarp_if_t *arpif, ipv4_addr_t prot_addr, char create){
 	int           i,j;
@@ -133,7 +134,7 @@ static int netarp_tab_create(netarp_if_t *arpif){
 
 
 int netarp_tab_lookup( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t *hard_addr, netpkt_t *pkt){
-	int           i,ret;
+	int           i,ret,created;
 	netarp_if_t   *arpif;
 	netpkt_t      *chain;
 	
@@ -141,6 +142,7 @@ int netarp_tab_lookup( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t *hard_a
 	
 	ret = 0;
 	chain = 0;
+	created = 0;
 	net_mutex_lock(arpif->arp_lock);
 	
 	/* Find an entry to update. */
@@ -170,6 +172,8 @@ int netarp_tab_lookup( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t *hard_a
 	arpif->arp_table[i].cr_time   = net_timer_ms();
 	arpif->arp_table[i].hold_time = net_timer_ms();
 	
+	created = 1;
+	
 ENDFUNC:
 	if(ret) {
 		/* We found an resolved ARP entry. */
@@ -187,6 +191,8 @@ ENDFUNC:
 	 */
 	if(chain)
 		netpkt_free_all(chain);
+	
+	if(created) netarp_request(netif,prot_addr);
 	
 	return ret;
 }
