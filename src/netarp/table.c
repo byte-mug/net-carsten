@@ -60,8 +60,6 @@ static int netarp_tab_find(netarp_if_t *arpif, ipv4_addr_t prot_addr, char creat
 		}
 		i = j;
 	}
-	if(i != NETARP_TABLE_SIZE)
-		arpif->arp_table[i].hold_time = 0;
 	
 	return i;
 }
@@ -94,6 +92,7 @@ netpkt_t *netarp_tab_update( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t h
 	 */
 	chain = arpif->arp_table[i].hold;
 	arpif->arp_table[i].hold = 0;
+	arpif->arp_table[i].hold_time = 0;
 	arpif->arp_table[i].cr_time = net_timer_ms();
 	
 ENDFUNC:
@@ -102,4 +101,93 @@ ENDFUNC:
 	return chain;
 }
 
+static int netarp_tab_create(netarp_if_t *arpif){
+	int           i,j;
+	net_time_t    cur_time, cur_diff, max_diff;
+	
+	/* Find an unused entry in the ARP table. */
+	for (i = 0; i < NETARP_TABLE_SIZE; ++i){
+		if(!( arpif->arp_table[i].used ))break;
+	}
+	
+	/*
+	 * If no unused entry is found, we try to find the oldest entry and throw it
+	 * away.
+	 */
+	if(i == NETARP_TABLE_SIZE){
+		cur_time = net_timer_ms();
+		max_diff = 0;
+		j = NETARP_TABLE_SIZE;
+		for (i = 0; i < NETARP_TABLE_SIZE; ++i){
+			cur_diff = cur_time - arpif->arp_table[i].cr_time;
+			if(cur_diff > max_diff){
+				max_diff = cur_diff;
+				j = i;
+			}
+		}
+		i = j;
+	}
+	
+	return i;
+}
+
+
+int netarp_tab_lookup( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t *hard_addr, netpkt_t *pkt){
+	int           i,ret;
+	netarp_if_t   *arpif;
+	netpkt_t      *chain;
+	
+	arpif = netif->arp;
+	
+	ret = 0;
+	chain = 0;
+	net_mutex_lock(arpif->arp_lock);
+	
+	/* Find an entry to update. */
+	for (i = 0; i < NETARP_TABLE_SIZE; ++i){
+		if(!( arpif->arp_table[i].used )) continue;
+		if(!( arpif->arp_table[i].resolved )) continue;
+		/*
+		 * Check if the source IP address of the incoming packet matches
+		 * the IP address in this ARP table entry.
+		 */
+		if(! IP4ADDR_EQ(prot_addr,arpif->arp_table[i].prot_addr) )continue;
+		
+		/*
+		 * If the ARP entry was resolved, set RETURN=non-0!
+		 */
+		if( arpif->arp_table[i].resolved ) ret = -1;
+		goto ENDFUNC;
+	}
+	
+	i = netarp_tab_create(arpif);
+	
+	chain = arpif->arp_table[i].hold;
+	arpif->arp_table[i].hold = 0;
+	arpif->arp_table[i].prot_addr = prot_addr;
+	arpif->arp_table[i].used      = 1;
+	arpif->arp_table[i].resolved  = 0;
+	arpif->arp_table[i].cr_time   = net_timer_ms();
+	arpif->arp_table[i].hold_time = net_timer_ms();
+	
+ENDFUNC:
+	if(ret) {
+		/* We found an resolved ARP entry. */
+		*hard_addr = arpif->arp_table[i].hard_addr;
+	}else{
+		/* An unresolved ARP entry was found or created. */
+		pkt->next_chain = arpif->arp_table[i].hold;
+		arpif->arp_table[i].hold = pkt;
+	}
+	
+	net_mutex_unlock(arpif->arp_lock);
+	
+	/*
+	 * Free the chain of the preempted ARP entry, if any.
+	 */
+	if(chain)
+		netpkt_free_all(chain);
+	
+	return ret;
+}
 

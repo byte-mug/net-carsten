@@ -24,6 +24,10 @@
 #include <netipv6/check.h>
 #include <netipv6/defs.h>
 
+#include <netipv4/ipv4.h>
+#include <netipv4/check.h>
+#include <netipv4/defs.h>
+
 #include <netnd6/table.h>
 #include <netnd6/send.h>
 
@@ -35,17 +39,15 @@
  * by placing the low-order 23-bits of the IP address into the low-order
  * 23 bits of the Ethernet multicast address 01-00-5E-00-00-00 (hex).
  */
-#if 0
 #define FNET_ETH_MULTICAST_IP4_TO_MAC(ip4_addr, mac_addr)  \
     do{   \
         (mac_addr)[0] = 0x01U; \
         (mac_addr)[1] = 0x00U; \
         (mac_addr)[2] = 0x5EU; \
-        (mac_addr)[3] = (fnet_uint8_t)(((fnet_uint8_t *)(&(ip4_addr)))[1] & 0x7FU); \
-        (mac_addr)[4] = ((fnet_uint8_t *)(&(ip4_addr)))[2];  \
-        (mac_addr)[5] = ((fnet_uint8_t *)(&(ip4_addr)))[3];  \
+        (mac_addr)[3] = (uint8_t)(((uint8_t *)(&(ip4_addr)))[1] & 0x7FU); \
+        (mac_addr)[4] = ((uint8_t *)(&(ip4_addr)))[2];  \
+        (mac_addr)[5] = ((uint8_t *)(&(ip4_addr)))[3];  \
     }while(0)
-#endif
 
 /* For IPv6 */
 #define FNET_ETH_MULTICAST_IP6_TO_MAC(ip6_addr, mac_addr)        \
@@ -90,7 +92,26 @@ void netif_send_l2_all(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr,uint16_t prot
  * @param pkt   destination IPv4-address (Pointer)
  */
 void netif_api_send_l3_ipv4(netif_t* nif,netpkt_t* pkt,void* addr){
-	netpkt_free(pkt);
+	mac_addr_t macaddr; /* 48-bit destination address */
+	ipv4_addr_t ipaddr;
+	
+	ipaddr = *((ipv4_addr_t*)addr);
+	
+	/*
+	 * Construct Ethernet header. Start with looking up deciding which
+	 * MAC address to use as a destination address. Broadcasts and
+	 * multicasts are special, all other addresses are looked up in the
+	 * ARP table.
+	 */
+	if( netipv4_addr_is_broadcast(nif,ipaddr) ) {
+		macaddr = (mac_addr_t){.mac={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}};
+	}else if(IP4_ADDR_IS_MULTICAST(ipaddr)) {
+		FNET_ETH_MULTICAST_IP4_TO_MAC(ipaddr,macaddr.mac);
+	}else{
+		/* Unicast address. */
+		if(! netarp_tab_lookup(nif,ipaddr,&macaddr,pkt) ) return;
+	}
+	nif->netif_class->ifapi_send_l2(nif,pkt,&macaddr,NETPROT_L3_IPV4);
 }
 
 static inline void netif_enqueue_chain(netpkt_t* pkt, netpkt_t* ll){

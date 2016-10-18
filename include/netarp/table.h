@@ -30,5 +30,15 @@
  */
 netpkt_t *netarp_tab_update( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t hard_addr, char create);
 
+/*
+ * Makes a Lookup on the ARP table.
+ * If the found ARP entry is un-resolved, it enqueues the packet.
+ * If no entry is found, it creates an new ARP entry and enqueues the packet.
+ *
+ * Return:     0 = No mac-address resolved; packet enqueued.
+ *         non-0 = mac-address resolved; packet not enqueued.
+ */
+int netarp_tab_lookup( netif_t *netif, ipv4_addr_t prot_addr, mac_addr_t *hard_addr, netpkt_t *pkt);
+
 #endif
 
