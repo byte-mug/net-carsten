@@ -34,6 +34,8 @@ void netgre_input(netif_t *nif,netpkt_t *pkt, netsock_flow_t *flow, net_sockaddr
 	if( netpkt_pullup( pkt, hdrlen ) ) goto DROP;
 	
 	hdr = netpkt_data( pkt );
+	
+	/* TODO: this check could be wrong. */
 	if( (hdr->flags & NETGRE_FLAGS_CHECKSUM) &&
 		(netprot_checksum( pkt, NETPKT_LENGTH(pkt)) != 0) )
 		goto DROP;

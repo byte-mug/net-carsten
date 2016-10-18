@@ -15,27 +15,15 @@
  */
 
 
-#ifndef _NETVNIC_VNIC_H_
-#define _NETVNIC_VNIC_H_
+#ifndef _NETGRE_OUTPUT_H_
+#define _NETGRE_OUTPUT_H_
 
-#include <netstd/stdint.h>
-#include <netpkt/pkt.h>
-#include <netif/hwaddr.h>
+#include <netvnic/vnic.h>
 
-#define NETVNIC_FLAGS_HAS_HWADDR  0x01
-
-/* Note: Yet experimental API. */
-
-typedef struct netvnic{
-	void           *vnic_in_inst;
-	void           *vnic_out_inst;
-	
-	void (*vnic_input) (struct netvnic* vnic,netpkt_t* pkt,uint16_t protocol);
-	void (*vnic_output) (struct netvnic* vnic,netpkt_t* pkt,uint16_t protocol,hwaddr_t* dst);
-	
-	hwaddr_t       vnic_hwaddr;
-	uint8_t        flags;
-} netvnic_t;
+/*
+ * (netvnic_t*)->vnic_output
+ */
+void netgre_output(netvnic_t* vnic,netpkt_t* pkt,uint16_t protocol,hwaddr_t* dst);
 
 #endif
 
