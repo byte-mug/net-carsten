@@ -165,7 +165,7 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
 			else
 			{
 				/* Try to use the router, if exists.*/
-				//neighbor = fnet_nd6_default_router_get(netif);
+				neighbor = netnd6_get_router(nif);
 				
 				if(! neighbor ) {
 					net_mutex_unlock(nif->nd6->nd6_lock);

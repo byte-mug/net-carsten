@@ -44,6 +44,71 @@ fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *
 	return 0;
 }
 
+fnet_nd6_neighbor_entry_t* netnd6_get_router(netif_t *nif){
+	netnd6_if_t                 *nd6_if;
+	int                         i,j;
+	
+	nd6_if = nif->nd6;
+	
+	if (! nd6_if) return 0;
+	
+	/* Find the entry in the cache. */
+	for(i = 0u; i < FNET_ND6_NEIGHBOR_CACHE_SIZE; i++)
+	{
+		/* Skip all non-reachable entries. */
+		switch( nd6_if->neighbor_cache[i].state ){
+		case FNET_ND6_NEIGHBOR_STATE_REACHABLE:
+		case FNET_ND6_NEIGHBOR_STATE_DELAY: /* Currently, we treat DELAY as Reachable. */
+			break;
+		default: continue;
+		}
+		
+		if(!(nd6_if->neighbor_cache[i].is_router)) continue;
+		
+		if(!(nd6_if->neighbor_cache[i].router_lifetime)) continue;
+		
+		/*
+		 * Routers that are reachable or probably reachable (i.e., in any
+		 * state other than INCOMPLETE) SHOULD be preferred over routers
+		 * whose reachability is unknown or suspect.
+		 */
+		return &(nd6_if->neighbor_cache[i]);
+	}
+	
+	/*
+	 * RFFC4861: When no routers on the list are known to be reachable or
+	 * probably reachable, routers SHOULD be selected in a round-robin
+	 * fashion, so that subsequent requests for a default router do not
+	 * return the same router until all other routers have been
+	 * selected.
+	 * Cycling through the router list in this case ensures that all
+	 * available routers are actively probed by the Neighbor
+	 * Unreachability Detection algorithm. A request for a default
+	 * router is made in conjunction with the sending of a packet to a
+	 * router, and the selected router will be probed for reachability
+	 * as a side effect.
+	 */
+	
+	for(	i = (nd6_if->neighbor_cycling_state++) % FNET_ND6_NEIGHBOR_CACHE_SIZE,j = 0  ;
+		j < FNET_ND6_NEIGHBOR_CACHE_SIZE;
+		j ++, i = (i+1) % FNET_ND6_NEIGHBOR_CACHE_SIZE
+	){
+		/* Skip unused entries. */
+		if(nd6_if->neighbor_cache[i].state == FNET_ND6_NEIGHBOR_STATE_NOTUSED) continue;
+		
+		if(!(nd6_if->neighbor_cache[i].is_router)) continue;
+		
+		if(!(nd6_if->neighbor_cache[i].router_lifetime)) continue;
+		
+		/*
+		 * Randomly select an entry.
+		 */
+		return &(nd6_if->neighbor_cache[i]);
+	}
+	;
+	return 0;
+}
+
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add2(netif_t *nif, ipv6_addr_t *src_ip, hwaddr_t *ll_addr2, fnet_nd6_neighbor_state_t state){
 	netnd6_if_t                 *nd6_if;
 	int                         i;

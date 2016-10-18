@@ -292,6 +292,9 @@ typedef struct netnd6_if {
 	                                                     * Solicitation messages. Used by address resolution
 	                                                     * and the Neighbor Unreachability Detection algorithm
 	                                                     * (see Sections 7.2 and 7.3).*/
+	
+	int                        neighbor_cycling_state;
+	
 } netnd6_if_t;
 
 #endif

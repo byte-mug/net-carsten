@@ -28,6 +28,8 @@ fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_get(netif_t *nif, ipv6_addr_t *
 
 fnet_nd6_neighbor_entry_t* netnd6_neighbor_cache_add2(netif_t *nif, ipv6_addr_t *src_ip, hwaddr_t *ll_addr, fnet_nd6_neighbor_state_t state);
 
+fnet_nd6_neighbor_entry_t* netnd6_get_router(netif_t *nif);
+
 fnet_nd6_prefix_entry_t*   netnd6_prefix_list_get(netif_t *nif, const ipv6_addr_t *prefix);
 
 /*
