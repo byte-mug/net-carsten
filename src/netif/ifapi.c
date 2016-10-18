@@ -205,6 +205,8 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
 			netif_enqueue_chain(pkt,neighbor->waiting_pkts);
 			neighbor->waiting_pkts = pkt;
 			net_mutex_unlock(nif->nd6->nd6_lock);
+			if( send_solicitation ) 
+				netnd6_neighbor_solicitation_send(nif, &ipsrc, 0 /* NULL for AR */, &ipaddr);
 			return;
 		}
 		
