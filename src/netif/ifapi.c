@@ -227,7 +227,7 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
  */
 void netif_api_send_l3_ipv6(netif_t* nif,netpkt_t* pkt,void* srcaddr,void* addr){
 	pkt->next_chain = 0;
-	netif_api_send_l3_ipv6_gen( nif, pkt, srcaddr, addr, nif->netif_class->ifapi_send_l2_all );
+	netif_api_send_l3_ipv6_gen( nif, pkt, srcaddr, addr, nif->netif_class->ifapi_send_l2 );
 }
 
 /**
@@ -239,6 +239,6 @@ void netif_api_send_l3_ipv6(netif_t* nif,netpkt_t* pkt,void* srcaddr,void* addr)
  * This function sends an entire chain of packets at once.
  */
 void netif_api_send_l3_ipv6_all(netif_t* nif,netpkt_t* pkt,void* srcaddr,void* addr){
-	netif_api_send_l3_ipv6_gen( nif, pkt, srcaddr, addr, nif->netif_class->ifapi_send_l2 );
+	netif_api_send_l3_ipv6_gen( nif, pkt, srcaddr, addr, nif->netif_class->ifapi_send_l2_all );
 }
 
