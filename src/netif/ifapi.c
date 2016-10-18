@@ -106,10 +106,6 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
 	ipv6_addr_t   ipsrc;
 	
 	ipaddr = *((ipv6_addr_t*)addr);
-	if(srcaddr)
-		ipsrc  = *((ipv6_addr_t*)srcaddr);
-	else
-		netipv6_select_src_addr_nsol(nif,&ipsrc,&ipaddr);
 	
 	/********************************************
 	 * Multicast.
@@ -127,6 +123,21 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
 	else{
 		fnet_nd6_neighbor_entry_t *neighbor;
 		char send_solicitation = 0;
+		
+		if(srcaddr)
+			ipsrc  = *((ipv6_addr_t*)srcaddr);
+		else
+			/*
+			 * We don't call netipv6_select_src_addr_nsol() here, because
+			 * netnd6_neighbor_solicitation_send() is going to call it
+			 * anyways!
+			 *
+			 * Instead, we call netipv6_select_src_addr_rsol() to quickly
+			 * grab one of our IPv6 addresses, which will cause
+			 * netnd6_neighbor_solicitation_send() to call
+			 * netipv6_select_src_addr_nsol() for the source adddress!
+			 */
+			netipv6_select_src_addr_rsol(nif,&ipsrc);
 		
 		net_mutex_lock(nif->nd6->nd6_lock);
 		/* Possible redirection.*/
