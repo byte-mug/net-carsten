@@ -203,6 +203,28 @@ fnet_nd6_redirect_entry_t* netnd6_redirect_table_add(netif_t *nif, const ipv6_ad
 	return entry;
 }
 
+void netnd6_redirect_table_get(netif_t *nif, ipv6_addr_t *destination_addr){
+	netnd6_if_t                 *nd6_if;
+	int                         i;
+	fnet_nd6_redirect_entry_t   *entry = 0;
+	
+	nd6_if = nif->nd6;
+	
+	if (! nd6_if) return;
+	
+	/* Check if the destination address exists.*/
+	for(i = 0u; i < FNET_ND6_REDIRECT_TABLE_SIZE; i++)
+	{
+		if(IP6ADDR_EQ(nd6_if->redirect_table[i].destination_addr, *destination_addr))
+		{
+			/* Found existing destination address.*/
+			entry = &nd6_if->redirect_table[i];
+			*destination_addr = nd6_if->redirect_table[i].target_addr;
+			return;
+		}
+	}
+}
+
 void netnd6_dad_failed(
 	netif_t *nif,
 	netipv6_if_addr_t *addr_info

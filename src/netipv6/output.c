@@ -86,7 +86,7 @@ void netipv6_output(
 		// TODO: IP fragmentation
 		goto DROP;
 	}else{
-		nif->netif_class->ifapi_send_l3_ipv6(nif,pkt,&dst_ip);
+		nif->netif_class->ifapi_send_l3_ipv6(nif,pkt,&(src_addr->ip.v6),&dst_ip);
 	}
 
 DROP:

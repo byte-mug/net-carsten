@@ -23,30 +23,32 @@
 #include <netif/mac.h>
 
 struct netif_api{
-	void (*ifapi_send_l2)(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr);
-	void (*ifapi_send_l2_all)(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr);
+	void (*ifapi_send_l2)(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr,uint16_t protocol);
+	void (*ifapi_send_l2_all)(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr,uint16_t protocol);
 	void (*ifapi_send_l3_ipv4)(netif_t* nif,netpkt_t* pkt,void* addr);
-	void (*ifapi_send_l3_ipv6)(netif_t* nif,netpkt_t* pkt,void* addr);
-	void (*ifapi_send_l3_ipv6_all)(netif_t* nif,netpkt_t* pkt,void* addr);
+	void (*ifapi_send_l3_ipv6)(netif_t* nif,netpkt_t* pkt,void* srcaddr,void* addr);
+	void (*ifapi_send_l3_ipv6_all)(netif_t* nif,netpkt_t* pkt,void* srcaddr,void* addr);
 };
 
 /**
  * @brief Default implementation of netif_api->ifapi_send_l2.
- * @param nif   netif-instance
- * @param pkt   network packet
- * @param addr  destination mac-address
+ * @param nif       netif-instance
+ * @param pkt       network packet
+ * @param addr      destination mac-address
+ * @param protocol  the 'EtherType' of the L3 protocol
  */
-void netif_api_send_l2(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr);
+void netif_api_send_l2(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr,uint16_t protocol);
 
 /**
  * @brief Default implementation of netif_api->ifapi_send_l2_all.
- * @param nif   netif-instance
- * @param pkt   network packet
- * @param addr  destination mac-address
+ * @param nif       netif-instance
+ * @param pkt       network packet
+ * @param addr      destination mac-address
+ * @param protocol  the 'EtherType' of the L3 protocol
  *
  * This function sends an entire chain of packets at once.
  */
-void netif_send_l2_all(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr);
+void netif_send_l2_all(netif_t* nif,netpkt_t* pkt,mac_addr_t* addr,uint16_t protocol);
 
 /**
  * @brief Default implementation of netif_api->ifapi_send_l3_ipv4.
@@ -62,7 +64,7 @@ void netif_api_send_l3_ipv4(netif_t* nif,netpkt_t* pkt,void* addr);
  * @param pkt   network packet
  * @param pkt   destination IPv6-address (Pointer)
  */
-void netif_api_send_l3_ipv6(netif_t* nif,netpkt_t* pkt,void* addr);
+void netif_api_send_l3_ipv6(netif_t* nif,netpkt_t* pkt,void* srcaddr,void* addr);
 
 /**
  * @brief Default implementation of netif_api->ifapi_send_l3_ipv6_all.
@@ -72,7 +74,7 @@ void netif_api_send_l3_ipv6(netif_t* nif,netpkt_t* pkt,void* addr);
  *
  * This function sends an entire chain of packets at once.
  */
-void netif_api_send_l3_ipv6_all(netif_t* nif,netpkt_t* pkt,void* addr);
+void netif_api_send_l3_ipv6_all(netif_t* nif,netpkt_t* pkt,void* srcaddr,void* addr);
 
 #endif
 

@@ -34,6 +34,8 @@ fnet_nd6_prefix_entry_t*   netnd6_prefix_list_add(netif_t *nif, const ipv6_addr_
 
 fnet_nd6_redirect_entry_t* netnd6_redirect_table_add(netif_t *nif, const ipv6_addr_t *destination_addr, const ipv6_addr_t *target_addr);
 
+void netnd6_redirect_table_get(netif_t *nif, ipv6_addr_t *destination_addr);
+
 void netnd6_dad_failed(
 	netif_t *nif,
 	netipv6_if_addr_t *addr_info

@@ -21,6 +21,7 @@
 #include <netarp/table.h>
 #include <netarp/arp_header.h>
 #include <netif/ifapi.h>
+#include <netif/l2defs.h>
 
 #include <netstd/endianness.h>
 
@@ -58,7 +59,7 @@ void netarp_input( netif_t *netif, netpkt_t *pkt ){
 		/*
 		 * Send all network packets out to the 'sender_hard_addr'.
 		 */
-		netif->netif_class->ifapi_send_l2_all(netif,pkt,&sender_hard_addr);
+		netif->netif_class->ifapi_send_l2_all(netif,pkt,&sender_hard_addr,NETPROT_L3_ARP);
 	}else{
 		// TODO: duplicate address detection.
 	}
@@ -74,7 +75,7 @@ void netarp_input( netif_t *netif, netpkt_t *pkt ){
 		arp_hdr->target_prot_addr = arp_hdr->sender_prot_addr;
 		arp_hdr->sender_prot_addr = netif->ipv4.address;
 		
-		netif->netif_class->ifapi_send_l2(netif,pkt,&sender_hard_addr);
+		netif->netif_class->ifapi_send_l2(netif,pkt,&sender_hard_addr,NETPROT_L3_ARP);
 		return;
 	}
 	

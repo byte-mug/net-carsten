@@ -183,7 +183,7 @@ void netnd6_redirect_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ip
 	
 DROP:
 	if(pkts){
-		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,(void*)&queue_addr);
+		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,0/* Not needed here */,(void*)&queue_addr);
 	}
 	netpkt_free(pkt);
 }

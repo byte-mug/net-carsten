@@ -20,6 +20,7 @@
 #include <netarp/arp_header.h>
 #include <netif/mac.h>
 #include <netif/ifapi.h>
+#include <netif/l2defs.h>
 #include <netpkt/pkt.h>
 #include <netmem/allocpkt.h>
 
@@ -50,7 +51,7 @@ void netarp_request( netif_t *netif, ipv4_addr_t ipaddr ){
 	arp_hdr->target_prot_addr = ipaddr;             /* Protocol address of target of this packet.*/
 	arp_hdr->sender_prot_addr = netif->ipv4.address; /* Protocol address of sender of this packet.*/
 	
-	netif->netif_class->ifapi_send_l2(netif,pkt,&sender_addr);
+	netif->netif_class->ifapi_send_l2(netif,pkt,&sender_addr,NETPROT_L3_ARP);
 }
 
 

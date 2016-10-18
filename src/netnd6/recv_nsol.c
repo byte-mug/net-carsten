@@ -39,7 +39,8 @@ static void netnd6_nsol_handle_lla(
 	netif_t *nif,
 	uint32_t size,
 	fnet_nd6_option_lla_header_t  *nd_option_slla,
-	ipv6_addr_t *src_ip
+	ipv6_addr_t *src_ip,
+	ipv6_addr_t *dst_ip
 );
 
 void netnd6_neighbor_solicitation_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_t *src_ip, ipv6_addr_t *dst_ip){
@@ -99,7 +100,7 @@ void netnd6_neighbor_solicitation_receive(netif_t *nif,netpkt_t *pkt, ipv6_addr_
 		if( (nd_option->type == FNET_ND6_OPTION_SOURCE_LLA) ) {
 			if(size >= (sizeof(fnet_nd6_option_header_t) + NETIF_HWADDR_SIZE(nif) ) ){
 				if( netpkt_pullup(pkt,size) ) goto DROP;
-				netnd6_nsol_handle_lla(nif,size,netpkt_data(pkt),src_ip);
+				netnd6_nsol_handle_lla(nif,size,netpkt_data(pkt),src_ip,dst_ip);
 			}
 		}
 		/* else, silently ignore any options they do not recognize
@@ -174,7 +175,8 @@ static void netnd6_nsol_handle_lla(
 	netif_t *nif,
 	uint32_t size,
 	fnet_nd6_option_lla_header_t  *nd_option_slla,
-	ipv6_addr_t *src_ip
+	ipv6_addr_t *src_ip,
+	ipv6_addr_t *dst_ip
 ){
 	fnet_nd6_neighbor_entry_t  *neighbor_cache_entry;
 	netpkt_t                   *pkts    = 0; /* Send-Chain. */
@@ -260,7 +262,7 @@ static void netnd6_nsol_handle_lla(
 	net_mutex_unlock(nif->nd6->nd6_lock);
 	
 	if(pkts) {
-		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,(void*)&queue_addr);
+		nif->netif_class->ifapi_send_l3_ipv6_all(nif,pkts,dst_ip,(void*)&queue_addr);
 	}
 }
 
