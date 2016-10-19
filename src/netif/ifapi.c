@@ -145,6 +145,13 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
 		fnet_nd6_neighbor_entry_t *neighbor;
 		char send_solicitation = 0;
 		
+		/*
+		 * Detecting, whether ipaddr os on-link; 1st pass.
+		 *
+		 * This can be done without the need to hold the nd6-lock.
+		 */
+		char is_onlink = IP6_ADDR_IS_LINKLOCAL(ipaddr) ? 1 : 0;
+		
 		if(srcaddr)
 			ipsrc  = *((ipv6_addr_t*)srcaddr);
 		else
@@ -161,14 +168,43 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
 			netipv6_select_src_addr_rsol(nif,&ipsrc);
 		
 		net_mutex_lock(nif->nd6->nd6_lock);
+		
+		/*
+		 * Detecting, whether ipaddr os on-link; 2nd pass.
+		 *
+		 * As we are accessing the prefix table we need to hold the nd6-lock.
+		 * When is_onlink is already true, we don't need to lookup the prefix list.
+		 */
+		is_onlink = is_onlink ? 1 : ( netnd6_prefix_list_lookup(nif,&ipaddr) ? 1 : 0 );
+		
 		/* Possible redirection.*/
 		netnd6_redirect_table_get(nif, &ipaddr);
 		
-		/* Check Neigbor cache.*/
-		neighbor = netnd6_neighbor_cache_get(nif, &ipaddr);
 		
 		/*
-		 * RFC4861 7.2.2: When a node has a unicast packet to send to a neighbor, but does not
+		 * RFC4861 7.2:
+		 * Address resolution is performed only on addresses that are determined to be
+		 * on-link and for which the sender does not know the corresponding link-layer address.
+		 * Address resolution is never performed on multicast addresses.
+		 */
+		if( is_onlink ) /* Destimnation is ON local-link.*/
+			/* Check Neigbor cache.*/
+			neighbor = netnd6_neighbor_cache_get(nif, &ipaddr);
+		else{
+			/* Try to use the router, if exists.*/
+			neighbor = netnd6_get_router(nif);
+			if(! neighbor ){
+				/* No router = drop the packet. */
+				net_mutex_unlock(nif->nd6->nd6_lock);
+				netpkt_free_all(pkt);
+				return;
+			}
+			ipaddr = neighbor->ip_addr;
+		}
+		
+		/*
+		 * RFC4861 7.2.2:
+		 * When a node has a unicast packet to send to a neighbor, but does not
 		 * know the neighbor's link-layer address, it performs address resolution.
 		 * For multicast-capable interfaces, this entails creating a
 		 * Neighbor Cache entry in the INCOMPLETE state and transmitting a
@@ -177,36 +213,15 @@ static void netif_api_send_l3_ipv6_gen(netif_t* nif,netpkt_t* pkt, void* srcaddr
 		 * corresponding to the target address.
 		 */
 		if(! neighbor ){
-			/*
-			 * RFC4861 7.2.Address resolution is performed only on addresses that are determined to be
-			 * on-link and for which the sender does not know the corresponding link-layer address.
-			 * Address resolution is never performed on multicast addresses.
-			 */
-			if( IP6_ADDR_IS_LINKLOCAL(ipaddr)
-				|| netnd6_prefix_list_lookup(nif,&ipaddr) )
-			/* Destimnation is ON local-link.*/
-			{
-				neighbor = netnd6_neighbor_cache_add2(nif, &ipaddr, 0, FNET_ND6_NEIGHBOR_STATE_INCOMPLETE);
+			
+			neighbor = netnd6_neighbor_cache_add2(nif, &ipaddr, 0, FNET_ND6_NEIGHBOR_STATE_INCOMPLETE);
 				
-				neighbor->state_time = net_timer_ms();
-				neighbor->solicitation_send_counter = 0u;
-				neighbor->solicitation_src_ip_addr = ipsrc;
+			neighbor->state_time = net_timer_ms();
+			neighbor->solicitation_send_counter = 0u;
+			neighbor->solicitation_src_ip_addr = ipsrc;
 				
-				/* AR: Transmitting a Neighbor Solicitation message targeted at the neighbor.*/
-				send_solicitation = 1;
-			}
-			else
-			{
-				/* Try to use the router, if exists.*/
-				neighbor = netnd6_get_router(nif);
-				
-				if(! neighbor ) {
-					net_mutex_unlock(nif->nd6->nd6_lock);
-					netpkt_free_all(pkt);
-					return;
-				}
-				ipaddr = neighbor->ip_addr;
-			}
+			/* AR: Transmitting a Neighbor Solicitation message targeted at the neighbor.*/
+			send_solicitation = 1;
 		}
 		
 		/* Link -layer address is not initialized. */
